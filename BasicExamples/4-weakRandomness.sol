@@ -17,7 +17,8 @@ contract Example4 {
         );
 
         if (result == n) {
-            payable(msg.sender).call{value: 2 ether}("");
+            (bool success, ) = payable(msg.sender).call{value: 2 ether}("");
+            require(sucess, "Low level call failed");
         } else {
             revert("Failed guess!");
         }

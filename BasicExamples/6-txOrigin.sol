@@ -24,7 +24,8 @@ contract Example6 is Ownable {
 		uint256 withdrawn = balance[msg.sender];
 		balance[msg.sender] = 0;	
 		// Interactions
-		payable(msg.sender).call{value: withdrawn}("");
+		(bool success, ) = payable(msg.sender).call{value: withdrawn}("");
+		require(sucess, "Low level call failed");
 	}
 	
 	function resetTimestamp (address user) public {

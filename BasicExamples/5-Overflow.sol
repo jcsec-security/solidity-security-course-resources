@@ -31,9 +31,11 @@ contract Example5 {
 		require(timestamp[msg.sender] - block.timestamp > 300, 
 			"A cooldown of 300 seconds is required!");
 		// Effect
+		uint toWithdraw = balance[msg.sender];
 		balance[msg.sender] = 0;
 		// Interaction
-		payable(msg.sender).call{value: balance[msg.sender]}("");
+		(bool success, ) = payable(msg.sender).call{value: toWithdraw}("");
+		require(sucess, "Low level call failed");
 	}
 
 }

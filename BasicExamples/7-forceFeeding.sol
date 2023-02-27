@@ -23,7 +23,8 @@ contract Example7 {
 		uint256 toWithdraw = balance[msg.sender];
 		balance[msg.sender] = 0;// Effects	
 		
-		payable(msg.sender).call{value: toWithdraw}("");// Interactions
+		(bool success, ) = payable(msg.sender).call{value: toWithdraw}("");// Interactions
+		require(sucess, "Low level call failed");
 	}
 }
 
