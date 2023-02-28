@@ -24,7 +24,7 @@ contract Example7 {
 		balance[msg.sender] = 0;// Effects	
 		
 		(bool success, ) = payable(msg.sender).call{value: toWithdraw}("");// Interactions
-		require(sucess, "Low level call failed");
+		require(success, "Low level call failed");
 	}
 }
 

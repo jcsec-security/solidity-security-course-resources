@@ -9,27 +9,27 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract Example6 is Ownable {
     mapping (address => uint256) balance;
-    mapping (address => uint256) timestamp;
+    mapping (address => uint256) blockstamp;
 	
     function deposit() external payable {
         balance[msg.sender] += msg.value;
-		timestamp[msg.sender] = block.number;
+		blockstamp[msg.sender] = block.number;
     }
 	
 	function withdraw() external {		
 		// Checks
-		require(block.number - timestamp[msg.sender] > 5,
-			"Tienes que esperar al menos 5 bloques!");
+		require(block.number - blockstamp[msg.sender] > 10,
+			"A cooldown of 10 blocks is required!!");
 		// Effects	
 		uint256 withdrawn = balance[msg.sender];
 		balance[msg.sender] = 0;	
 		// Interactions
 		(bool success, ) = payable(msg.sender).call{value: withdrawn}("");
-		require(sucess, "Low level call failed");
+		require(success, "Low level call failed");
 	}
 	
 	function resetTimestamp (address user) public {
-		timestamp[user] = 0;
+		blockstamp[user] = 0;
 	}
 }
 

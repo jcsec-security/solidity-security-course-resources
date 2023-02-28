@@ -19,23 +19,23 @@ contract BasicOverflow {
 
 contract Example5 {
     mapping (address => uint256) balance;
-	mapping (address => uint256) timestamp;
+	mapping (address => uint256) blockstamp;
 	
     function deposit() external payable {
         balance[msg.sender] += msg.value;
-		timestamp[msg.sender] = block.timestamp;
+		blockstamp[msg.sender] = block.number;
     }
 	
 	function withdraw() external {
 		// Check
-		require(timestamp[msg.sender] - block.timestamp > 300, 
-			"A cooldown of 300 seconds is required!");
+		require(blockstamp[msg.sender] - block.number > 10, 
+			"A cooldown of 10 blocks is required!");
 		// Effect
 		uint toWithdraw = balance[msg.sender];
 		balance[msg.sender] = 0;
 		// Interaction
 		(bool success, ) = payable(msg.sender).call{value: toWithdraw}("");
-		require(sucess, "Low level call failed");
+		require(success, "Low level call failed");
 	}
 
 }

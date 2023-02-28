@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 /* 
-* @dev This contracts includes an example of a reentrancy bug.
+* @dev This contracts includes an example of a reentrancy bug
 */
 
 contract Example2 {
@@ -15,7 +15,7 @@ contract Example2 {
 	function withdraw() external {		
 		require(balance[msg.sender] > 0, "Saldo cero!");	
 		(bool success, ) = payable(msg.sender).call{value: balance[msg.sender]}("");
-		require(sucess, "Low level call failed");
+		require(success, "Low level call failed");
 		balance[msg.sender] = 0;	
 	}
 	
