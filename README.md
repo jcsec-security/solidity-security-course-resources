@@ -9,3 +9,6 @@ This repo contains most of the practical examples and exercises that I use durin
 Some of the snippets may be heavily based on open source resources. If you feel you should get credit for those, ping me and I will add your name and Github here!
 
 Feel free to use this material adding a link to my repo :)
+
+
+:construction::construction: WIP, will be finish mid-march probably :construction::construction:
