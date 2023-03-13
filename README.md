@@ -4,9 +4,9 @@ This repo contains most of the practical examples and exercises that I use durin
 
 The repo have the following structure:
 
-    - :bug: [Basic examples](/examples) :bug: contains extremely simplified contracts (almost snippets) that illustrate individual security issues. This should be your starting point! read about each of the issues and then look into the code to recognize the bug and even craft your own PoC.
-    - :hatching_chick: [Exercises](/exercises) :hatching_chick: although still simplified, these contracts include some structure already. Most of the code being redacted but they try to simulate the "look" of a real SC for you to start your bug hunting journey.
-    - :muscle: [Faillapop mock-audit environment](/faillapop) :muscle: contains a whole protocol with multiple contracts that interact with each! Instead of just following a common CTF approach, this was designed to simulate a fully functional real world protocol that requested YOUR audit. Most vulnerabilities follow very basic patterns, but it will give you the opportunity to mimic the audit of a larger codebase compared to the exercises above. 
+- :bug: [Basic examples](/examples) :bug: contains extremely simplified contracts (almost snippets) that illustrate individual security issues. This should be your starting point! read about each of the issues and then look into the code to recognize the bug and even craft your own PoC.
+- :hatching_chick: [Exercises](/exercises) :hatching_chick: although still simplified, these contracts include some structure already. Most of the code being redacted but they try to simulate the "look" of a real SC for you to start your bug hunting journey.
+- :muscle: [Faillapop mock-audit environment](/faillapop) :muscle: contains a whole protocol with multiple contracts that interact with each! Instead of just following a common CTF approach, this was designed to simulate a fully functional real world protocol that requested YOUR audit. Most vulnerabilities follow very basic patterns, but it will give you the opportunity to mimic the audit of a larger codebase compared to the exercises above. 
 
 
 Some of the snippets may be heavily based on open source resources. If you feel you should get credit for those, :bow: apologies and ping me so I can add your name and Github on the relevant section!
