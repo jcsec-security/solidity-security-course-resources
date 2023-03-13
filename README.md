@@ -16,3 +16,4 @@ Feel free to use this material adding a link to my repo :)
 
 
 :books: This repo and its contents should be in constant evolution! If you feel there is a topic that should be covered or have some suggestions, comments or corrections PLEASE do reach me through @jcr_auditor in Telegram or email me at audits@jcrsecurity.io
+

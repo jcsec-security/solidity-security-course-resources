@@ -1,0 +1,6 @@
+# Faillapop
+solutions/
+cache/
+out/
+lib/
+.env
