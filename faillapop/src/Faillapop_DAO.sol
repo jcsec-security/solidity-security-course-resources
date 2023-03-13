@@ -16,7 +16,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 */
 contract FP_DAO {
     
-    /************************************** Constants *******************************************************/
+        /************************************** Constants *******************************************************/
     ///@notice The threshold for the random number generator
     uint constant THRESHOLD = 10;
     ///@notice The default number of voters for passing a vote
@@ -41,14 +41,26 @@ contract FP_DAO {
         uint totalVoters;
     }
 
+
+    /**
+        @notice The Vote enum is used to record the vote of a user
+        @dev DIDNT_VOTE is the default value, FOR and AGAINST are the possible votes
+     */
+    enum Vote {
+        DIDNT_VOTE,
+        FOR,
+        AGAINST
+    }
+
+
     ///@notice Current disputes, indexed by disputeId
     mapping(uint256 => Dispute) public disputes;
     ///@notice The ID of the next dispute to be created
     uint256 public nextDisputeId;
-    ///@dev Mapping between user address and disputeId to record the vote. 1 is FOR, 2 is AGAINST
-    mapping(address => mapping(uint => uint)) public hasVoted;
-    ///@dev Mapping between disputeId and the result of the dispute. 1 is FOR, 2 is AGAINST
-    mapping(uint256 => uint8) public disputeResult;
+    ///@dev Mapping between user address and disputeId to record the vote.
+    mapping(address => mapping(uint => Vote)) public hasVoted;
+    ///@dev Mapping between disputeId and the result of the dispute.
+    mapping(uint256 => Vote) public disputeResult;
     ///@notice Password to access key features
     string private password;
     ///@notice The address of the Shop contract
@@ -60,7 +72,7 @@ contract FP_DAO {
     ///@notice The FPT token contract
     IERC20 public fptContract;
     ///@notice Min number of people to pass a proposal
-    uint256 quorum; 
+    uint256 quorum;
 
 
     /************************************** Events and modifiers *****************************************************/
@@ -68,7 +80,7 @@ contract FP_DAO {
     ///@notice Emitted when the contract configuration is changed, contains the address of the Shop
     event NewConfig(address shop, address nft);
     ///@notice Emitted when a user votes, contains the disputeId and the user address
-    event Vote(uint disputeId, address user);
+    event VoteCasted(uint disputeId, address user);
     ///@notice Emitted when a new dispute is created, contains the disputeId and the itemId
     event NewDispute(uint disputeId, uint itemId);
     ///@notice Emitted when a dispute is closed, contains the disputeId and the itemId
@@ -144,13 +156,13 @@ contract FP_DAO {
         @param vote The vote, true for FOR, false for AGAINST
      */
     function castVote(uint disputeId, bool vote) external { 
-        require(hasVoted[msg.sender][disputeId] == 0, "You have already voted");
+        require(hasVoted[msg.sender][disputeId] == Vote.DIDNT_VOTE , "You have already voted");
         
         uint votingPower = calcVotingPower(msg.sender);
 
         if (vote) {
             disputes[disputeId].votesFor += votingPower;
-            hasVoted[msg.sender][disputeId] = 1;
+            hasVoted[msg.sender][disputeId] = Vote.FOR;
         } else {
             disputes[disputeId].votesAgainst += votingPower;
             
@@ -158,7 +170,7 @@ contract FP_DAO {
 
         disputes[disputeId].totalVoters += 1;
 
-        emit Vote(disputeId, msg.sender);
+        emit VoteCasted(disputeId, msg.sender);
     }
 
     /**
@@ -201,10 +213,10 @@ contract FP_DAO {
 
         if (disputes[disputeId].votesFor > disputes[disputeId].votesAgainst) {
             buyerWins(itemId);
-            disputeResult[disputeId] = 1;
+            disputeResult[disputeId] = Vote.FOR;
         } else {
             sellerWins(itemId);
-            disputeResult[disputeId] = 2;
+            disputeResult[disputeId] = Vote.AGAINST;
         }
         
         delete disputes[disputeId];
@@ -231,7 +243,7 @@ contract FP_DAO {
         @param disputeId The ID of the target dispute
      */
     function checkLottery(uint disputeId) external { 
-        require(hasVoted[msg.sender][disputeId] != 0, "User didn't vote");
+        require(hasVoted[msg.sender][disputeId] != Vote.DIDNT_VOTE, "User didn't vote");
         
         if(disputeResult[disputeId] == hasVoted[msg.sender][disputeId]) {
             lotteryNFT(msg.sender);
@@ -239,7 +251,7 @@ contract FP_DAO {
             revert("User voted for the wrong side");
         }
 
-    }      
+    }        
 
     /************************************** Internal *****************************************************************/
     
