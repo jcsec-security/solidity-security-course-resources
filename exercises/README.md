@@ -14,7 +14,9 @@ Each of those contracts will have 2-3 security issues for you to find and exploi
 - Vulnerable Vault 
 
 
-:warning::warning::warning:DO NOT DEPLOY THIS, IT IS FULL OF SECURITY ISSUES:warning::warning::warning:
+:warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning:
+
+:warning:**DO NOT DEPLOY THIS, IT IS FULL OF SECURITY ISSUES**:warning:
 
 
 ## Next steps

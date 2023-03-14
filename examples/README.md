@@ -34,7 +34,9 @@ Here you have multiple small examples of basic security issue of solidity smart 
 
 
 
-:warning::warning::warning:DO NOT DEPLOY THIS, IT IS FULL OF SECURITY ISSUES:warning::warning::warning:
+:warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning:
+
+:warning:**DO NOT DEPLOY THIS, IT IS FULL OF SECURITY ISSUES**:warning:
 
 
 ## Next steps
