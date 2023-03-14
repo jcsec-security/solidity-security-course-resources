@@ -33,12 +33,6 @@ Here you have multiple small examples of basic security issue of solidity smart 
 	- Replayable (+ frontrun)
 
 
-
-:warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning:
-
-:warning:**DO NOT DEPLOY THIS, IT IS FULL OF SECURITY ISSUES**:warning:
-
-
 ## Next steps
 
 The current version is `v0.2`. At the moment I would like to achieve the below in order to upgrade it:
@@ -52,3 +46,11 @@ The current version is `v0.2`. At the moment I would like to achieve the below i
 - Additional reentrancy options: cross contract and token based
 
 
+---
+
+
+:warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning:
+
+:warning:**DO NOT DEPLOY THIS, IT IS FULL OF SECURITY ISSUES**:warning:
+
+:warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning:

@@ -6,11 +6,6 @@ I sometimes feel that the jump between being able to identify issues in small sn
 So I decided to create the Faillapop protocol!
 
 
-:warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning:
-
-:warning:**DO NOT DEPLOY THIS, IT IS FULL OF SECURITY ISSUES**:warning:
-
-
 ## The Faillapop protocol
 
 The Faillapop protocol is a vulnerable-by-design protocol to help Web3 security students to practice their skills in a fun environment. The protocol is composed of multiple contracts that interact between each other to create a decentralize buying and selling platform. Disputes are resolved through a DAO and malicious sellers are checked by forcing a deposit before selling anything... but there have been a lot of bad decision during this process :mag:. 
@@ -51,3 +46,13 @@ The current version is `v0.2`. At the moment I would like to achieve the below i
 - Make Shop upgradable
 - Add more complex issues (several steps, X-contract reentrancy, etc.)
 - Add further deviations from the doc/diagrams
+
+
+---
+
+
+:warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning:
+
+:warning:**DO NOT DEPLOY THIS, IT IS FULL OF SECURITY ISSUES**:warning:
+
+:warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning:

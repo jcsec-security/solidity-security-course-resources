@@ -14,11 +14,6 @@ Each of those contracts will have 2-3 security issues for you to find and exploi
 - Vulnerable Vault 
 
 
-:warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning:
-
-:warning:**DO NOT DEPLOY THIS, IT IS FULL OF SECURITY ISSUES**:warning:
-
-
 ## Next steps
 
 The current version is `v1.0`. At the moment I would like to achieve the below in order to upgrade it:
@@ -28,3 +23,13 @@ The current version is `v1.0`. At the moment I would like to achieve the below i
 - Oracle
 - Flash loan
 - Upgradable contracts
+
+
+---
+
+
+:warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning:
+
+:warning:**DO NOT DEPLOY THIS, IT IS FULL OF SECURITY ISSUES**:warning:
+
+:warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning:
