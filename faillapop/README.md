@@ -6,7 +6,7 @@ I sometimes feel that the jump between being able to identify issues in small sn
 So I decided to create the Faillapop protocol!
 
 
-:boom:DO NOT DEPLOY THIS, IT IS FULL OF SECURITY ISSUES:boom:
+:warning::warning::warning:DO NOT DEPLOY THIS, IT IS FULL OF SECURITY ISSUES:warning::warning::warning:
 
 
 ## The Faillapop protocol
@@ -33,7 +33,7 @@ Solutions are not provided along this repo but documentation has been created fo
 The current version is `v0.2`. At the moment I would like to achieve the below in order to upgrade it:
 
 
-`V1.0`
+:pushpin:`V1.0`
 
 - Add test cases
 - Add secret voting
@@ -42,7 +42,7 @@ The current version is `v0.2`. At the moment I would like to achieve the below i
 - Load mappings in assembly
 
 
-`V2.0`
+:pushpin:`V2.0`
 
 - Oracle
 - Flash loan provider

@@ -5,6 +5,7 @@ pragma solidity ^0.8.13;
 /**
 	@dev This contract includes an example of strict comparison of balance which is vulnerable to force feeding.
 		Some ways of receiving ether are not preventable and could not be accounted for in this way.
+		You can read about force feeding ether at https://swcregistry.io/docs/SWC-132
 	@custom:deployed-at ETHERSCAN URL
 	@custom:exercise This contract is part of JC's basic examples at https://github.com/jcr-security/solidity-security-teaching-resources
 */ 

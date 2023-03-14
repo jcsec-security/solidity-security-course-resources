@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 
 /** 
 	@dev This contracts includes an example of a basic reentrancy bug
+		You can read about reentrancy attacks at https://swcregistry.io/docs/SWC-107
 	@custom:exercise This contract is part of JC's basic examples at https://github.com/jcr-security/solidity-security-teaching-resources
 */
 contract Example2 {

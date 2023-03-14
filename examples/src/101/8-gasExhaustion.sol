@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 
 /**
     @dev This contract includes an example of DoS by gas exhaustion (OOG) due to an unbounded loop.
+        You can read about Gas Exhaustion at https://swcregistry.io/docs/SWC-128
     @custom:deployed-at ETHERSCAN URL
 	@custom:exercise This contract is part of JC's basic examples at https://github.com/jcr-security/solidity-security-teaching-resources
 */

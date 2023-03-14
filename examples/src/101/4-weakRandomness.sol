@@ -7,6 +7,7 @@ uint constant FEE = 100 wei;
 /**
     @dev This contract includes an example of a predictable "random" number generation.
     @custom:deployed-at ETHERSCAN URL
+        You can read about weak pseudo-randomness at https://swcregistry.io/docs/SWC-120
 	@custom:exercise This contract is part of JC's basic examples at https://github.com/jcr-security/solidity-security-teaching-resources
 */
 contract Example4 {

@@ -6,6 +6,7 @@ pragma solidity ^0.7.6;
 	@dev This contract includes an example of an integer underflow in line 25.
 		please be aware that although solidity > 0.8.0 will check arith operations by default
 		unchecked{} and assembly{} blocks DO NOT check the math, therefore making over/underflow exploitable.
+		You can read about integer overflows at https://swcregistry.io/docs/SWC-101
 	@dev deployed-at ETHERSCAN URL
 	@dev custom:exercise This contract is part of JC's basic examples at https://github.com/jcr-security/solidity-security-teaching-resources
 */
