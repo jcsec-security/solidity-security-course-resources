@@ -140,6 +140,10 @@ contract FP_Shop is AccessControl {
         require(offered_items[itemId].seller != address(0), "itemId does not exist");
         require(offered_items[itemId].state == State.Selling, "Item cannot be bought");
         require(msg.value >= offered_items[itemId].price, "Incorrect amount of Ether sent");
+        require(
+            !hasRole(BLACKLISTED_ROLE, offered_items[itemId].seller),
+            "Seller is blacklisted"
+        );
 
         offered_items[itemId].buyer = msg.sender;
         offered_items[itemId].state = State.Pending;

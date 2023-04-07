@@ -23,7 +23,7 @@ contract xFnReentrancy is ReentrancyGuard {
 
     // The devs added the below Fn last minute without security patterns in mind, just relying in the modifier
     function withdraw() external nonReentrant {		
-        require(balance[msg.sender] > 0, "Saldo cero!");
+        require(balance[msg.sender] > 0, "No funds available!");
 
         (bool success, ) = payable(msg.sender).call{value: balance[msg.sender]}("");
         require(success, "Transfer failed" );
