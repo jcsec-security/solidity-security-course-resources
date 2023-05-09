@@ -103,6 +103,8 @@ contract VulnerableShop is Ownable {
      */
     function doBuy(uint itemId) external payable {
         uint price = offered_items[itemId].price;
+        require(msg.value == price, "Ether sent doesn not match the price");
+
         /*
         * C2C buying logic goes here
         */
@@ -120,6 +122,7 @@ contract VulnerableShop is Ownable {
      */
     function newSale(string calldata title, string calldata description, uint256 price) external {
         uint itemId = offerIndex + 1;
+        offerIndex += 1;
 
         /*
         * C2C selling logic goes here
@@ -134,7 +137,8 @@ contract VulnerableShop is Ownable {
         @param itemId The ID of the item being disputed
         @param buyerReasoning The reasoning of the buyer for the claim
      */
-    function disputeSale(uint itemId, string calldata buyerReasoning) external {      
+    function disputeSale(uint itemId, string calldata buyerReasoning) external {    
+
         /*
         * C2C dispute logic goes here
         */
@@ -146,6 +150,7 @@ contract VulnerableShop is Ownable {
      */
     function reimburse(uint itemId) external onlyOwner {
         uint amount = offered_items[itemId].price; 		
+
 		/*
         * Reimbursement logic goes here
         */
@@ -160,7 +165,8 @@ contract VulnerableShop is Ownable {
         @notice Endpoint to confirm the receipt of an item and trigger the payment to the seller. 
         @param itemId The ID of the item being confirmed
      */
-    function itemReceived(uint itemId) external {      
+    function itemReceived(uint itemId) external { 
+             
         /*
         * C2C confirmation logic goes here
         */

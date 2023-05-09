@@ -120,10 +120,12 @@ contract VulnerableBank {
         @param amount The amount of tokens to distribute
      */
     function doDistribute(uint amount) internal {
+
         /*
         * Benefits distribution logic goes here
         * and strictly follows Checks-Effects-Interactionc :)
         */
+        
     }
 
 }

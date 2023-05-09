@@ -71,9 +71,11 @@ contract VulnerableDAO {
         string calldata newMagicWord 
     ) external isAuthorized(magicWord) {
         password = newMagicWord;
+
         /*
         * DAO configuration logic goes here
         */
+
     }
 
 
@@ -82,10 +84,12 @@ contract VulnerableDAO {
         @param disputeId The ID of the target dispute
         @param vote The vote, true for FOR, false for AGAINST
      */
-    function castVote(uint disputeId, bool vote) external {      
+    function castVote(uint disputeId, bool vote) external {  
+
         /*
         * DAO vote casting logic goes here
         */
+
     }
 
 
@@ -100,10 +104,12 @@ contract VulnerableDAO {
         string calldata buyerReasoning, 
         string calldata sellerReasoning,
         string calldata magicWord
-    ) external isAuthorized(magicWord) returns (uint) {       
+    ) external isAuthorized(magicWord) returns (uint) { 
+
         /*
         * DAO dispute logic goes here
         */
+
     }    
 
 
@@ -111,10 +117,12 @@ contract VulnerableDAO {
         @notice Resolve a dispute if enough users have voted and remove it from the storage
         @param disputeId The ID of the target dispute
      */
-    function endDispute(uint disputeId) external {       
+    function endDispute(uint disputeId) external {  
+
         /*
         * DAO dispute logic goes here
         */
+
     }    
 
     /**
@@ -135,7 +143,7 @@ contract VulnerableDAO {
     /************************************** Internal *****************************************************************/
 
     /**
-        @notice Run a PRNG to award NFT to a user
+        @notice Run a PRNG to award a cool NFT to the user
         @param user The address of the elegible user
      */
     function lotteryNFT(address user) internal {
@@ -149,9 +157,11 @@ contract VulnerableDAO {
         ))));
 
         if (randomNumber < THRESHOLD   ) {
+
             /*
             * Award NFT logic goes here
             */
+            
             emit AwardNFT(user);
         }
 

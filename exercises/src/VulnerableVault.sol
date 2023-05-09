@@ -13,8 +13,6 @@ contract VulnerableVault {
 
     // The balance of the users in the vault
     mapping (address => uint256) balance;
-    // The amount of funds locked for selling purposes
-    mapping (address => uint256) lockedFunds;
     // The address of the powerseller NFT contract
     address powerseller_nft;
     // The address of the Shop contract
@@ -63,6 +61,7 @@ contract VulnerableVault {
     ///@notice Stake attached funds in the vault for later locking, the users must do it on their own
     function doStake() external payable {
         require(msg.value > 0, "Amount cannot be zero");
+        
         balance[msg.sender] += msg.value;
         
         emit Stake(msg.sender, msg.value);
