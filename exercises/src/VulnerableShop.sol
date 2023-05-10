@@ -102,9 +102,9 @@ contract VulnerableShop is Ownable {
         @dev The user must send the exact amount of Ether to buy the item
      */
     function doBuy(uint itemId) external payable {
-        uint price = offered_items[itemId].price;
-        require(msg.value == price, "Ether sent doesn not match the price");
-
+        require(offered_items[itemId].seller != address(0), "itemId does not exist");
+        require(offered_items[itemId].state == State.Selling, "Item cannot be bought");
+  
         /*
         * C2C buying logic goes here
         */
@@ -121,7 +121,7 @@ contract VulnerableShop is Ownable {
         @param price The price in Ether of the item being sold
      */
     function newSale(string calldata title, string calldata description, uint256 price) external {
-        uint itemId = offerIndex + 1;
+        uint itemId = offerIndex;
         offerIndex += 1;
 
         /*
@@ -138,7 +138,6 @@ contract VulnerableShop is Ownable {
         @param buyerReasoning The reasoning of the buyer for the claim
      */
     function disputeSale(uint itemId, string calldata buyerReasoning) external {    
-
         /*
         * C2C dispute logic goes here
         */
@@ -149,6 +148,8 @@ contract VulnerableShop is Ownable {
         @param itemId The ID of the item being reimbursed
      */
     function reimburse(uint itemId) external onlyOwner {
+        require(offered_items[itemId].seller != address(0), "itemId does not exist");
+
         uint amount = offered_items[itemId].price; 		
 
 		/*
