@@ -12,7 +12,7 @@ uint constant PERCENT = 100;
         amount to the beneficiaries. The caller will be rewarded with a percentage of the distributed amount as incentive.
     @custom:exercise This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/solidity-security-teaching-resources
 */
-contract VulnerableBank {
+contract VulnerableInvestment {
 
     /************************************** State vars  and Structs *******************************************************/
 

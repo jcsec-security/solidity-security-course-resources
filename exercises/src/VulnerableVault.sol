@@ -25,8 +25,8 @@ contract VulnerableVault {
     event Rewards(address user, uint amount);
     
 
-    ///@notice Check if the user has enough unlocked funds staked
-    modifier enoughStaked(uint amount) {
+    ///@notice Check if the user has enough funds
+    modifier enoughFunds(uint amount) {
 		require(
             (balance[msg.sender] - amount) > 0,
             "Amount cannot be unstaked"
@@ -58,8 +58,8 @@ contract VulnerableVault {
     }
 
 
-    ///@notice Stake attached funds in the vault for later locking, the users must do it on their own
-    function doStake() external payable {
+    ///@notice Desposit attached funds in the vault
+    function deposit() external payable {
         require(msg.value > 0, "Amount cannot be zero");
         
         balance[msg.sender] += msg.value;
@@ -68,9 +68,9 @@ contract VulnerableVault {
     }
 	
 
-    ///@notice Unstake unlocked funds from the vault, the user must do it on their own
-    ///@param amount The amount of funds to unstake 
-    function doUnstake(uint amount) external enoughStaked(amount) {	
+    ///@notice withdraw funds from the vault
+    ///@param amount The amount of funds to withdraw 
+    function withdraw(uint amount) external enoughFunds(amount) {	
         require(amount > 0, "Amount cannot be zero");
 
         balance[msg.sender] -= amount;
