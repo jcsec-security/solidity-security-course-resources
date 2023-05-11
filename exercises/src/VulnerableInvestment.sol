@@ -96,7 +96,7 @@ contract VulnerableInvestment {
     {
         //  Checks
         require(total_invested >= MIN_INVESTED, "Not big enough to avoid rounding issues");
-        require(percentage < MAX_PERCENTAGE, "Not big enough to avoid rounding issues");
+        require(percentage < MAX_PERCENTAGE, "Should be below the max distribution percentage");
         require(block.number - latest_distribution >= distribute_period, "Too soon");
 
         // Effects
