@@ -1,3 +1,7 @@
+> [!WARNING]
+> The code has been made vulnerable on purpose. Please do not deploy or reuse this codebase in a live environment.
+
+---
 
 # Basic solidity security examples!
 
@@ -44,13 +48,3 @@ The current version is `v0.2`. At the moment I would like to achieve the below i
 - Foundry tests of the 101 issues
 - Deploy to testnet and add etherscan links
 - Additional reentrancy options: cross contract and token based
-
-
----
-
-
-:warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning:
-
-:warning:**DO NOT DEPLOY THIS, IT IS FULL OF SECURITY ISSUES**:warning:
-
-:warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning:
