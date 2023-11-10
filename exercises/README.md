@@ -1,3 +1,7 @@
+> [!WARNING]
+> The code has been made vulnerable on purpose. Please do not deploy or reuse this codebase in a live environment.
+
+---
 
 # Basic bug huntig exercise!
 
@@ -23,13 +27,3 @@ The current version is `v1.0`. At the moment I would like to achieve the below i
 - Oracle
 - Flash loan
 - Upgradable contracts
-
-
----
-
-
-:warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning:
-
-:warning:**DO NOT DEPLOY THIS, IT IS FULL OF SECURITY ISSUES**:warning:
-
-:warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning:
