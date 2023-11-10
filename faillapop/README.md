@@ -1,3 +1,7 @@
+> [!WARNING]
+> The code has been made vulnerable on purpose. Please do not deploy or reuse this codebase in a live environment.
+
+---
 
 # Mock audit exercise!
 
@@ -46,13 +50,3 @@ The current version is `v0.2`. At the moment I would like to achieve the below i
 - Make Shop upgradable
 - Add more complex issues (several steps, X-contract reentrancy, etc.)
 - Add further deviations from the doc/diagrams
-
-
----
-
-
-:warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning:
-
-:warning:**DO NOT DEPLOY THIS, IT IS FULL OF SECURITY ISSUES**:warning:
-
-:warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning::warning:
