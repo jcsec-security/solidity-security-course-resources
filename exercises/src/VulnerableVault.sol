@@ -20,13 +20,13 @@ contract VulnerableVault {
 
     /************************************** Events and modifiers *****************************************************/
 
-    event Stake(address user, uint amount);
-    event Unstake(address user, uint amount);
-    event Rewards(address user, uint amount);
+    event Stake(address user, uint256 amount);
+    event Unstake(address user, uint256 amount);
+    event Rewards(address user, uint256 amount);
     
 
     ///@notice Check if the user has enough funds
-    modifier enoughFunds(uint amount) {
+    modifier enoughFunds(uint256 amount) {
 		require(
             (balance[msg.sender] - amount) > 0,
             "Amount cannot be unstaked"
@@ -34,16 +34,6 @@ contract VulnerableVault {
 
         _;
     }
-
-    ///@notice Check if the user has enough unlocked funds staked
-    modifier onlyShop() {
-		require(
-            msg.sender == shop_addr,
-            "Unauthorized"
-        );
-        _;
-    }
-
 
     /************************************** External  ****************************************************************/ 
 
@@ -70,7 +60,7 @@ contract VulnerableVault {
 
     ///@notice withdraw funds from the vault
     ///@param amount The amount of funds to withdraw 
-    function withdraw(uint amount) external enoughFunds(amount) {	
+    function withdraw(uint256 amount) external enoughFunds(amount) {	
         require(amount > 0, "Amount cannot be zero");
 
         balance[msg.sender] -= amount;
@@ -87,7 +77,7 @@ contract VulnerableVault {
         First checks if the user is elegible through the checkPrivilege function that will revert if not. 
      */
     function claimRewards() external {	
-        uint amount;
+        uint256 amount;
 
         powerseller_nft.call( 
             abi.encodeWithSignature(

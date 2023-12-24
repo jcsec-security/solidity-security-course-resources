@@ -48,7 +48,7 @@ contract VulnerableShop is Ownable {
         address buyer;
         string title;
         string description; 
-        uint price;
+        uint256 price;
         State state;
     }
 
@@ -79,8 +79,8 @@ contract VulnerableShop is Ownable {
 
     /************************************** Events and modifiers *****************************************************/
 
-    event Buy(address user, uint item);
-    event NewItem(uint id, string title);
+    event Buy(address user, uint256 item);
+    event NewItem(uint256 id, string title);
     event Reimburse(address user);
     event AwardNFT(address user);
     
@@ -101,7 +101,7 @@ contract VulnerableShop is Ownable {
         @param itemId The ID of the item being bought
         @dev The user must send the exact amount of Ether to buy the item
      */
-    function doBuy(uint itemId) external payable {
+    function doBuy(uint256 itemId) external payable {
         require(offered_items[itemId].seller != address(0), "itemId does not exist");
         require(offered_items[itemId].state == State.Selling, "Item cannot be bought");
   
@@ -121,7 +121,7 @@ contract VulnerableShop is Ownable {
         @param price The price in Ether of the item being sold
      */
     function newSale(string calldata title, string calldata description, uint256 price) external {
-        uint itemId = offerIndex;
+        uint256 itemId = offerIndex;
         offerIndex += 1;
 
         /*
@@ -137,7 +137,7 @@ contract VulnerableShop is Ownable {
         @param itemId The ID of the item being disputed
         @param buyerReasoning The reasoning of the buyer for the claim
      */
-    function disputeSale(uint itemId, string calldata buyerReasoning) external {    
+    function disputeSale(uint256 itemId, string calldata buyerReasoning) external {    
         /*
         * C2C dispute logic goes here
         */
@@ -147,10 +147,10 @@ contract VulnerableShop is Ownable {
         @notice Reimburse a buyer. 
         @param itemId The ID of the item being reimbursed
      */
-    function reimburse(uint itemId) external onlyOwner {
+    function reimburse(uint256 itemId) external onlyOwner {
         require(offered_items[itemId].seller != address(0), "itemId does not exist");
 
-        uint amount = offered_items[itemId].price; 		
+        uint256 amount = offered_items[itemId].price; 		
 
 		/*
         * Reimbursement logic goes here
@@ -166,7 +166,7 @@ contract VulnerableShop is Ownable {
         @notice Endpoint to confirm the receipt of an item and trigger the payment to the seller. 
         @param itemId The ID of the item being confirmed
      */
-    function itemReceived(uint itemId) external { 
+    function itemReceived(uint256 itemId) external { 
              
         /*
         * C2C confirmation logic goes here
@@ -178,7 +178,7 @@ contract VulnerableShop is Ownable {
         @notice Endpoint to remove a malicious sale and slash the stake. The owner of the contract can remove a malicious sale and blacklist the seller
         @param itemId The ID of the item which sale is considered malicious
      */
-    function removeMaliciousSale(uint itemId) external onlyOwner {
+    function removeMaliciousSale(uint256 itemId) external onlyOwner {
         require(offered_items[itemId].seller != address(0), "itemId does not exist");
 
         /*
@@ -196,7 +196,7 @@ contract VulnerableShop is Ownable {
         @param itemId The ID of the item which sale is being removed
         @param toBePaid If the seller should be paid or not
      */
-    function deleteSale(uint itemId, bool toBePaid) public {
+    function deleteSale(uint256 itemId, bool toBePaid) public {
 
         delete offered_items[itemId];
 
@@ -214,7 +214,7 @@ contract VulnerableShop is Ownable {
         @param itemId The ID of the item being disputed
         @return The dispute details
      */
-	function query_dispute (uint itemId) public view returns (Dispute memory) {
+	function query_dispute (uint256 itemId) public view returns (Dispute memory) {
 		return disputed_items[itemId];
 	}
 

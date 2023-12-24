@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 
-uint constant THRESHOLD = 10;
+uint256 constant THRESHOLD = 10;
 
 /** 
     @notice The contract allows to vote on open disputes. If the dispute is resolved in favor of the buyer,
@@ -20,16 +20,16 @@ contract VulnerableDAO {
             - AGAINST is in favor of the seller claim
      */
     struct Dispute {
-        uint itemId;
+        uint256 itemId;
         string buyerReasoning;
         string sellerReasoning;
-        uint votesFor;
-        uint votesAgainst;
-        uint totalVoters;
+        uint256 votesFor;
+        uint256 votesAgainst;
+        uint256 totalVoters;
     }
 
     // Current disputes, indexed by disputeID
-    mapping(uint => Dispute) public disputes;
+    mapping(uint256 => Dispute) public disputes;
     // Password to access the key functions
     string private password;
 
@@ -84,7 +84,7 @@ contract VulnerableDAO {
         @param disputeId The ID of the target dispute
         @param vote The vote, true for FOR, false for AGAINST
      */
-    function castVote(uint disputeId, bool vote) external {  
+    function castVote(uint256 disputeId, bool vote) external {  
 
         /*
         * DAO vote casting logic goes here
@@ -100,11 +100,11 @@ contract VulnerableDAO {
         @param sellerReasoning The reasoning of the seller against the claim
      */
     function newDispute( 
-        uint itemId, 
+        uint256 itemId, 
         string calldata buyerReasoning, 
         string calldata sellerReasoning,
         string calldata magicWord
-    ) external isAuthorized(magicWord) returns (uint) { 
+    ) external isAuthorized(magicWord) returns (uint256) { 
 
         /*
         * DAO dispute logic goes here
@@ -117,7 +117,7 @@ contract VulnerableDAO {
         @notice Resolve a dispute if enough users have voted and remove it from the storage
         @param disputeId The ID of the target dispute
      */
-    function endDispute(uint disputeId) external {  
+    function endDispute(uint256 disputeId) external {  
 
         /*
         * DAO dispute logic goes here
@@ -129,7 +129,7 @@ contract VulnerableDAO {
         @notice Randomly award an NFT to a user if they voten for the winning side
         @param disputeID The ID of the target dispute
      */
-    function checkLottery(uint disputeID) external {     
+    function checkLottery(uint256 disputeID) external {     
           
         /*
         * DAO lottery award logic goes here
@@ -147,7 +147,7 @@ contract VulnerableDAO {
         @param user The address of the elegible user
      */
     function lotteryNFT(address user) internal {
-        uint randomNumber = uint8(
+        uint256 randomNumber = uint8(
             uint256(
                 keccak256(
                     abi.encodePacked(
@@ -175,7 +175,7 @@ contract VulnerableDAO {
         @notice Query the details of a dispute
         @param disputeId The ID of the target dispute
      */
-	function query_dispute(uint disputeId) public view returns (Dispute memory) {
+	function query_dispute(uint256 disputeId) public view returns (Dispute memory) {
 		return disputes[disputeId];
 	}
 

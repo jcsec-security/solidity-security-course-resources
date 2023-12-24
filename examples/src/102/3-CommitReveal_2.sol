@@ -3,8 +3,8 @@ pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-uint constant MIN_WINDOW = 2*60; // 2 minutes
-uint constant MAX_WINDOW = 3*24*60*60; // 3 days
+uint256 constant MIN_WINDOW = 2*60; // 2 minutes
+uint256 constant MAX_WINDOW = 3*24*60*60; // 3 days
 
 
 /**
@@ -21,29 +21,29 @@ contract RiddlerContract is Ownable {
     struct Riddle {
         string question;
         string answer;
-        uint commitBefore;
+        uint256 commitBefore;
     }
 
 
     // Window in seconds
-    uint commitWindow; 
-    uint revealWindow;
+    uint256 commitWindow; 
+    uint256 revealWindow;
     // Mapping of riddle ID to riddle struct
-    mapping(uint => Riddle) public riddles;
-    uint public riddleCount;
+    mapping(uint256 => Riddle) public riddles;
+    uint256 public riddleCount;
     // Mapping of user address to riddle ID to commit hash
-    mapping(address => mapping(uint => bytes32)) public commits;
-    mapping(address => uint) public points;
+    mapping(address => mapping(uint256 => bytes32)) public commits;
+    mapping(address => uint256) public points;
     
 
     /************************************** Events and modifiers *******************************************************/
 
     event AnswerCommited(address user);
     event AnswerRevealed(address user, string answer);
-    event SolutionAnnounced(uint id, string question, string answer);
+    event SolutionAnnounced(uint256 id, string question, string answer);
 
  
-    modifier enforceWindowSize(uint commit) {
+    modifier enforceWindowSize(uint256 commit) {
         require(
             commit >= MIN_WINDOW && commit <= MAX_WINDOW, 
             "Minimum windows size of 2 minutes, max of 3 days"
@@ -52,13 +52,13 @@ contract RiddlerContract is Ownable {
     }
 
 
-    modifier isCommitTime(uint id) { 
+    modifier isCommitTime(uint256 id) { 
         require(block.timestamp <= riddles[id].commitBefore, "Not the time to Commit"); 
         _; 
     }
 
 
-    modifier isRevealTime(uint id) { 
+    modifier isRevealTime(uint256 id) { 
         require(keccak256(abi.encode(riddles[id].answer)) != keccak256(""),
             "Not the time to reveal!"); 
         _; 
@@ -67,12 +67,12 @@ contract RiddlerContract is Ownable {
 
     /************************************** External *******************************************************/ 
     
-    constructor(uint commit) enforceWindowSize(commit) {      
+    constructor(uint256 commit) enforceWindowSize(commit) {      
         commitWindow = commit;
     }
 
 
-    function modifyWindowSize(uint commit) 
+    function modifyWindowSize(uint256 commit) 
         external 
         onlyOwner 
         enforceWindowSize(commit) 
@@ -85,9 +85,9 @@ contract RiddlerContract is Ownable {
     function submitRiddle(string memory _question) 
         external
         onlyOwner 
-        returns(uint) 
+        returns(uint256) 
     {
-        uint newId = riddleCount;
+        uint256 newId = riddleCount;
         riddleCount++;
 
         riddles[newId] = Riddle (
@@ -106,7 +106,7 @@ contract RiddlerContract is Ownable {
     ///  so the ownership of the answer can be proven. This way, it is not possible to frontrun+replay the 
     ///  commit hash for the win, as the attacker address won't match. Including a seed is not ALWAYS needed, e.g. if 
     ///  the space of potential answer is big enough to render precomputation impractical.
-    function commitAnswer(uint _riddleId, bytes32 commitHash)
+    function commitAnswer(uint256 _riddleId, bytes32 commitHash)
         external 
         isCommitTime(_riddleId) 
     {
@@ -120,7 +120,7 @@ contract RiddlerContract is Ownable {
 
 
     // Reveal the answer for a specific riddle
-    function revealAnswer(uint _riddleId, string calldata _answer, string calldata _seed)
+    function revealAnswer(uint256 _riddleId, string calldata _answer, string calldata _seed)
         external
         isRevealTime(_riddleId)
     {
@@ -145,7 +145,7 @@ contract RiddlerContract is Ownable {
 
 
     // Announce the solution for a specific riddle
-    function announceSolution(uint id, string calldata solution) 
+    function announceSolution(uint256 id, string calldata solution) 
         external   
         onlyOwner
         returns(uint, string memory, string memory) 

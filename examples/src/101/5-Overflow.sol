@@ -28,7 +28,7 @@ contract Example5 {
 			"A cooldown of 10 blocks is required!");
 
 		// Effects
-		uint toWithdraw = balance[msg.sender];
+		uint256 toWithdraw = balance[msg.sender];
 		balance[msg.sender] = 0;
 
 		// Interactions

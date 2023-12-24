@@ -18,9 +18,9 @@ contract FP_DAO {
     
         /************************************** Constants *******************************************************/
     ///@notice The threshold for the random number generator
-    uint constant THRESHOLD = 10;
+    uint256 constant THRESHOLD = 10;
     ///@notice The default number of voters for passing a vote
-    uint constant DEFAULT_QUORUM = 100;
+    uint256 constant DEFAULT_QUORUM = 100;
 
 
     /************************************** State vars and Structs *******************************************************/
@@ -33,12 +33,12 @@ contract FP_DAO {
             - AGAINST is in favor of the seller claim
      */
     struct Dispute {
-        uint itemId;
+        uint256 itemId;
         string buyerReasoning;
         string sellerReasoning;
-        uint votesFor;
-        uint votesAgainst;
-        uint totalVoters;
+        uint256 votesFor;
+        uint256 votesAgainst;
+        uint256 totalVoters;
     }
 
 
@@ -58,7 +58,7 @@ contract FP_DAO {
     ///@notice The ID of the next dispute to be created
     uint256 public nextDisputeId;
     ///@dev Mapping between user address and disputeId to record the vote.
-    mapping(address => mapping(uint => Vote)) public hasVoted;
+    mapping(address => mapping(uint256 => Vote)) public hasVoted;
     ///@dev Mapping between disputeId and the result of the dispute.
     mapping(uint256 => Vote) public disputeResult;
     ///@notice Password to access key features
@@ -80,11 +80,11 @@ contract FP_DAO {
     ///@notice Emitted when the contract configuration is changed, contains the address of the Shop
     event NewConfig(address shop, address nft);
     ///@notice Emitted when a user votes, contains the disputeId and the user address
-    event VoteCasted(uint disputeId, address user);
+    event VoteCasted(uint256 disputeId, address user);
     ///@notice Emitted when a new dispute is created, contains the disputeId and the itemId
-    event NewDispute(uint disputeId, uint itemId);
+    event NewDispute(uint256 disputeId, uint256 itemId);
     ///@notice Emitted when a dispute is closed, contains the disputeId and the itemId
-    event EndDispute(uint disputeId, uint itemId);
+    event EndDispute(uint256 disputeId, uint256 itemId);
     ///@notice Emitted when a user is awarder a cool NFT, contains the user address
     event AwardNFT(address user);
 
@@ -155,10 +155,10 @@ contract FP_DAO {
         @param disputeId The ID of the target dispute
         @param vote The vote, true for FOR, false for AGAINST
      */
-    function castVote(uint disputeId, bool vote) external { 
+    function castVote(uint256 disputeId, bool vote) external { 
         require(hasVoted[msg.sender][disputeId] == Vote.DIDNT_VOTE , "You have already voted");
         
-        uint votingPower = calcVotingPower(msg.sender);
+        uint256 votingPower = calcVotingPower(msg.sender);
 
         if (vote) {
             disputes[disputeId].votesFor += votingPower;
@@ -180,11 +180,11 @@ contract FP_DAO {
         @param sellerReasoning The reasoning of the seller against the claim
      */
     function newDispute( 
-        uint itemId, 
+        uint256 itemId, 
         string calldata buyerReasoning, 
         string calldata sellerReasoning
-    ) external onlyShop() returns (uint) {     
-        uint dId = nextDisputeId;
+    ) external onlyShop() returns (uint256) {     
+        uint256 dId = nextDisputeId;
         nextDisputeId += 1;
 
         disputes[dId] = Dispute(
@@ -204,12 +204,12 @@ contract FP_DAO {
         @notice Resolve a dispute if enough users have voted and remove it from the storage
         @param disputeId The ID of the target dispute
      */
-    function endDispute(uint disputeId) external {  
+    function endDispute(uint256 disputeId) external {  
         if (disputes[disputeId].totalVoters < quorum) {
             revert("Not enough voters");
         }
 
-        uint itemId = disputes[disputeId].itemId;
+        uint256 itemId = disputes[disputeId].itemId;
 
         if (disputes[disputeId].votesFor > disputes[disputeId].votesAgainst) {
             buyerWins(itemId);
@@ -229,8 +229,8 @@ contract FP_DAO {
         @notice Cancel an ongoing dispute. Either by the buyer or blacklisting (shop contract)
         @param disputeId The ID of the target dispute
      */
-    function cancelDispute(uint disputeId) external onlyShop() { 
-        uint itemId = disputes[disputeId].itemId;     
+    function cancelDispute(uint256 disputeId) external onlyShop() { 
+        uint256 itemId = disputes[disputeId].itemId;     
                 
         delete disputes[disputeId];
 
@@ -242,7 +242,7 @@ contract FP_DAO {
         @notice Randomly award an NFT to a user if they voten for the winning side
         @param disputeId The ID of the target dispute
      */
-    function checkLottery(uint disputeId) external { 
+    function checkLottery(uint256 disputeId) external { 
         require(hasVoted[msg.sender][disputeId] != Vote.DIDNT_VOTE, "User didn't vote");
         
         if(disputeResult[disputeId] == hasVoted[msg.sender][disputeId]) {
@@ -260,7 +260,7 @@ contract FP_DAO {
         @param user The address of the elegible user
      */
     function lotteryNFT(address user) internal { 
-        uint randomNumber = uint8(
+        uint256 randomNumber = uint8(
             uint256(
                 keccak256(
                     abi.encodePacked(
@@ -281,7 +281,7 @@ contract FP_DAO {
         @notice Resolve a dispute in favor of the buyer triggering the Shop's return item and refund logic
         @param itemId The ID of the item involved in the dispute
      */
-    function buyerWins(uint itemId) internal {
+    function buyerWins(uint256 itemId) internal {
         shopContract.returnItem(itemId);
     }
 
@@ -289,7 +289,7 @@ contract FP_DAO {
         @notice Resolve a dispute in favor of the seller triggering the Shop's close sale dispute logic
         @param itemId The ID of the item involved in the dispute
      */
-    function sellerWins(uint itemId) internal {
+    function sellerWins(uint256 itemId) internal {
         shopContract.endDispute(itemId);
     }
 
@@ -306,7 +306,7 @@ contract FP_DAO {
         @notice Query the details of a dispute
         @param disputeId The ID of the target dispute
      */
-	function query_dispute(uint disputeId) public view returns (Dispute memory) {
+	function query_dispute(uint256 disputeId) public view returns (Dispute memory) {
 		return disputes[disputeId];
 	}
 

@@ -10,7 +10,7 @@ contract CRVotingTest is Test  {
     address bob = address(0x2);
     address carol = address(0x3);
     address payable mallory = payable(address(0x4));
-    uint proposalId;
+    uint256 proposalId;
 
     function setUp() public {
         //addresses
@@ -65,7 +65,7 @@ contract CRVotingTest is Test  {
         vm.warp(402);
 
         // Checking results
-        ( , , uint votesFor, uint votesAgainst) = targetVoting.votingResults(proposalId);
+        ( , , uint256 votesFor, uint256 votesAgainst) = targetVoting.votingResults(proposalId);
         assertEq(votesFor, 2, "Incorrect voting results");
     }
 

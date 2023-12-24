@@ -17,20 +17,20 @@ interface IFP_Shop {
         @param itemId The ID of the item being bought
         @dev The user must send the exact amount of Ether to buy the item
      */
-    function doBuy(uint itemId) external payable;
+    function doBuy(uint256 itemId) external payable;
 	
     /**
         @notice Endpoint to dispute a sale. The buyer will supply the supporting info to the DAO
         @param itemId The ID of the item being disputed
         @param buyerReasoning The reasoning of the buyer for the claim
      */
-    function disputeSale(uint itemId, string calldata buyerReasoning) external;
+    function disputeSale(uint256 itemId, string calldata buyerReasoning) external;
 
     /**
         @notice Endpoint to confirm the receipt of an item and trigger the payment to the seller. 
         @param itemId The ID of the item being confirmed
      */
-    function itemReceived(uint itemId) external;
+    function itemReceived(uint256 itemId) external;
 
 
     /**
@@ -71,7 +71,7 @@ interface IFP_Shop {
         @param itemId The ID of the item being disputed
         @param sellerReasoning The reasoning of the seller for the claim
      */
-    function disputedSaleReply(uint itemId, string calldata sellerReasoning) external;
+    function disputedSaleReply(uint256 itemId, string calldata sellerReasoning) external;
 
 
     /** 
@@ -84,6 +84,6 @@ interface IFP_Shop {
         @notice Endpoint to remove a malicious sale and slash the stake. The owner of the contract can remove a malicious sale and blacklist the seller
         @param itemId The ID of the item which sale is considered malicious
      */
-    function removeMaliciousSale(uint itemId) external;
+    function removeMaliciousSale(uint256 itemId) external;
 
 }

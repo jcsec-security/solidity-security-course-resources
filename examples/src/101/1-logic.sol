@@ -5,7 +5,7 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 
-uint constant N_VAULT = 10;
+uint256 constant N_VAULT = 10;
 
 
 /**
@@ -16,15 +16,15 @@ contract Example1 is Ownable {
 
 	struct Vault {
 		bool locked;
-		uint[] wallet;
+		uint256[] wallet;
 	}
 
 	Vault[N_VAULT] vaults;
 
     function checkCredit() external onlyOwner {
-		uint accumulator = 0;
-		for (uint i = 0; i < N_VAULT; i++) { 	
-			for (uint j = 0; i< vaults[i].wallet.length; j++) {
+		uint256 accumulator = 0;
+		for (uint256 i = 0; i < N_VAULT; i++) { 	
+			for (uint256 j = 0; i< vaults[i].wallet.length; j++) {
 				accumulator += vaults[i].wallet[j];
 			}
 			
@@ -36,14 +36,14 @@ contract Example1 is Ownable {
     }
 
 
-	function deposit(uint n_vault) external payable {
+	function deposit(uint256 n_vault) external payable {
 		require(n_vault < N_VAULT, "Vault does not exist");
 
 		vaults[0].wallet.push(msg.value);
 	}
 
 
-	function vaultState(uint n_vault) public view returns (bool) {
+	function vaultState(uint256 n_vault) public view returns (bool) {
 		return vaults[n_vault].locked;
 	}
 

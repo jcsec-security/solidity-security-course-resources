@@ -15,7 +15,7 @@ contract Example8 {
 
     function checkCreditors() public {
 
-        for (uint i = 1; i < creditorAddresses.length; i++) {
+        for (uint256 i = 1; i < creditorAddresses.length; i++) {
 
             if (creditorAddresses[i-1] != creditorAddresses[i]) {
                win = creditorAddresses[i];
@@ -26,7 +26,7 @@ contract Example8 {
 
     function addCreditors() external {
 
-        for(uint i=0;i<350;i++) {
+        for(uint256 i=0;i<350;i++) {
             creditorAddresses.push(msg.sender);
         }
 

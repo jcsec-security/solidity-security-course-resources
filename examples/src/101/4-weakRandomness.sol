@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 
-uint constant FEE = 100 wei;
+uint256 constant FEE = 100 wei;
 
 /**
     @dev This contract includes an example of a predictable "random" number generation.
@@ -17,7 +17,7 @@ contract Example4 {
 
     function guess(uint256 n) public payable returns (bool) {
         require(msg.value == FEE, "Fee not paid!");
-        uint pot = address(this).balance;
+        uint256 pot = address(this).balance;
 
         result = uint256(
             keccak256(abi.encodePacked(blockhash(block.number - 1), block.timestamp))

@@ -56,7 +56,7 @@ contract FP_Shop is AccessControl {
         address buyer;
         string title;
         string description; 
-        uint price;
+        uint256 price;
         State state;
     }  
 
@@ -91,15 +91,15 @@ contract FP_Shop is AccessControl {
     /************************************** Events and modifiers *****************************************************/
 
     ///@notice Emitted when a user buys an item, contains the user address and the item ID
-    event Buy(address user, uint item);
+    event Buy(address user, uint256 item);
     ///@notice Emitted when a user creates a new sale, contains the item ID and the title of the item
-    event NewItem(uint id, string title);
+    event NewItem(uint256 id, string title);
     ///@notice Emitted when a user modifies a sale, contains the item ID and the title of the item
-    event ModifyItem(uint id, string title);
+    event ModifyItem(uint256 id, string title);
     ///@notice Emitted when a user disputes a sale, contains the user address and the item ID
-    event OpenDispute(address user, uint item);
+    event OpenDispute(address user, uint256 item);
     ///@notice Emitted when a user received a refund, contains the user address and the amount
-    event Reimburse(address user, uint amount);
+    event Reimburse(address user, uint256 amount);
     ///@notice Emitted when a user receives an reward NFT, contains the user address
     event AwardNFT(address user);
     ///@notice Emitted when a user is blacklisted, contains the user address
@@ -136,7 +136,7 @@ contract FP_Shop is AccessControl {
         @param itemId The ID of the item being bought
         @dev The user must send the exact amount of Ether to buy the item
      */
-    function doBuy(uint itemId) external payable {
+    function doBuy(uint256 itemId) external payable {
         require(offered_items[itemId].seller != address(0), "itemId does not exist");
         require(offered_items[itemId].state == State.Selling, "Item cannot be bought");
         require(msg.value >= offered_items[itemId].price, "Incorrect amount of Ether sent");
@@ -157,7 +157,7 @@ contract FP_Shop is AccessControl {
         @param itemId The ID of the item being disputed
         @param buyerReasoning The reasoning of the buyer for the claim
      */
-    function disputeSale(uint itemId, string calldata buyerReasoning) external {   
+    function disputeSale(uint256 itemId, string calldata buyerReasoning) external {   
         require(offered_items[itemId].buyer == msg.sender, "Not the buyer");   
 
         offered_items[itemId].state = State.Disputed;
@@ -171,7 +171,7 @@ contract FP_Shop is AccessControl {
         @notice Endpoint to confirm the receipt of an item and trigger the payment to the seller. 
         @param itemId The ID of the item being confirmed
      */
-    function itemReceived(uint itemId) external {
+    function itemReceived(uint256 itemId) external {
         require(offered_items[itemId].buyer == msg.sender, "Not the buyer");
         offered_items[itemId].state = State.Sold;
 
@@ -239,7 +239,7 @@ contract FP_Shop is AccessControl {
         require(offered_items[itemId].state == State.Selling, "Sale can't be modified");	
         
         // Update vault
-        uint priceDifference;
+        uint256 priceDifference;
         if (offered_items[itemId].price > newPrice) {
             priceDifference = offered_items[itemId].price - newPrice;
             vaultContract.doUnlock(msg.sender, priceDifference);
@@ -261,7 +261,7 @@ contract FP_Shop is AccessControl {
         @notice Endpoint to cancel an active sale
         @param itemId The ID of the item which sale is being cancelled
     */
-    function cancelActiveSale (uint itemId) external { 
+    function cancelActiveSale (uint256 itemId) external { 
         require(offered_items[itemId].seller == msg.sender, "Only the seller can cancel the sale");   
         require(offered_items[itemId].state == State.Selling, "Sale can't be cancelled");     
         
@@ -275,7 +275,7 @@ contract FP_Shop is AccessControl {
         @param _vacationMode The new vacation mode of the seller
      */
     function setVacationMode(bool _vacationMode) external {
-        for (uint i = 0; i < offerIndex; i++) {
+        for (uint256 i = 0; i < offerIndex; i++) {
             if (offered_items[i].seller == msg.sender) {
 
                 if (_vacationMode && offered_items[i].state == State.Selling) {
@@ -296,7 +296,7 @@ contract FP_Shop is AccessControl {
         @param itemId The ID of the item being disputed
         @param sellerReasoning The reasoning of the seller for the claim
      */
-    function disputedSaleReply(uint itemId, string calldata sellerReasoning) external {    
+    function disputedSaleReply(uint256 itemId, string calldata sellerReasoning) external {    
         require(offered_items[itemId].seller == msg.sender, "Not the seller"); 
         require(offered_items[itemId].state == State.Disputed, "Item not disputed");  
     
@@ -323,7 +323,7 @@ contract FP_Shop is AccessControl {
         @notice Endpoint to remove a malicious sale and slash the stake. The owner of the contract can remove a malicious sale and blacklist the seller
         @param itemId The ID of the item which sale is considered malicious
      */
-    function removeMaliciousSale(uint itemId) external onlyRole(ADMIN_ROLE) {
+    function removeMaliciousSale(uint256 itemId) external onlyRole(ADMIN_ROLE) {
         require(offered_items[itemId].seller != address(0), "itemId does not exist");
 
         if (offered_items[itemId].state == State.Pending) {
@@ -346,7 +346,7 @@ contract FP_Shop is AccessControl {
         @param itemId The ID of the item which sale is being removed
         @param toBePaid If the seller should be paid or not
      */
-    function closeSale(uint itemId, bool toBePaid) public {
+    function closeSale(uint256 itemId, bool toBePaid) public {
         address seller = offered_items[itemId].seller;
         uint256 price = offered_items[itemId].price;
 
@@ -379,8 +379,8 @@ contract FP_Shop is AccessControl {
         @notice Reimburse a buyer. 
         @param itemId The ID of the item being reimbursed
      */
-    function reimburse(uint itemId) internal {
-        uint price = offered_items[itemId].price; 	
+    function reimburse(uint256 itemId) internal {
+        uint256 price = offered_items[itemId].price; 	
         address buyer = offered_items[itemId].buyer;	
 
         // Pay the buyer back
@@ -396,7 +396,7 @@ contract FP_Shop is AccessControl {
         @param itemId The ID of the item being disputed
         @param sellerReasoning The reasoning of the seller against the claim
      */
-    function openDispute(uint itemId, string calldata sellerReasoning) internal {
+    function openDispute(uint256 itemId, string calldata sellerReasoning) internal {
         address buyer = offered_items[itemId].buyer;
         Dispute storage dispute = disputed_items[itemId]; 
 
@@ -416,8 +416,8 @@ contract FP_Shop is AccessControl {
             to pursue the dispute
         @param itemId The ID of the item being disputed
      */
-    function closeDispute(uint itemId) internal {
-        uint dId = disputed_items[itemId].disputeId;
+    function closeDispute(uint256 itemId) internal {
+        uint256 dId = disputed_items[itemId].disputeId;
         // Forcefully cancel an ongoing dispute
         daoContract.cancelDispute(dId);
 
@@ -431,11 +431,11 @@ contract FP_Shop is AccessControl {
         @param itemId The ID of the item being disputed
         @return The dispute details
      */
-	function query_dispute (uint itemId) public view returns (Dispute memory) {
+	function query_dispute (uint256 itemId) public view returns (Dispute memory) {
 		return disputed_items[itemId];
 	}
 
-    function query_sale (uint itemId) public view returns (Sale memory) {
+    function query_sale (uint256 itemId) public view returns (Sale memory) {
         return offered_items[itemId];
     }
 

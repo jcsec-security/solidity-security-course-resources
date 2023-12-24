@@ -26,7 +26,7 @@ interface IFP_DAO {
         @notice Cast a vote on a dispute
         @param disputeId The ID of the target dispute
      */
-    function castVote(uint disputeId) external;
+    function castVote(uint256 disputeId) external;
 
     /**
         @notice Open a dispute
@@ -35,28 +35,28 @@ interface IFP_DAO {
         @param sellerReasoning The reasoning of the seller against the claim
      */
     function newDispute( 
-        uint itemId, 
+        uint256 itemId, 
         string calldata buyerReasoning, 
         string calldata sellerReasoning
-    ) external returns (uint);
+    ) external returns (uint256);
 
     /**
         @notice Resolve a finished dispute
         @param disputeId The ID of the target dispute
      */
-    function endDispute(uint disputeId) external;
+    function endDispute(uint256 disputeId) external;
 
 
     /**
         @notice Cancel an ongoing dispute. Either by the buyer or blacklisting (shop contract)
         @param disputeId The ID of the target dispute
      */
-    function cancelDispute(uint disputeId) external;
+    function cancelDispute(uint256 disputeId) external;
 
     
     /**
         @notice Award NFT to a user if they voten for the winning side
         @param disputeID The ID of the target dispute
      */
-    function checkLottery(uint disputeID) external;
+    function checkLottery(uint256 disputeID) external;
 }

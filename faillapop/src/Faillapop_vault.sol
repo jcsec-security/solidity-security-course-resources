@@ -50,17 +50,17 @@ contract FP_Vault is AccessControl {
     /************************************** Events and modifiers *****************************************************/
 
     ///@notice Emitted when a user stakes funds, contains the user address and the amount staked
-    event Stake(address user, uint amount);
+    event Stake(address user, uint256 amount);
     ///@notice Emitted when a user unstakes funds, contains the user address and the amount unstaked
-    event Unstake(address user, uint amount);
+    event Unstake(address user, uint256 amount);
     ///@notice Emitted when a user funds get locked, contains the user address and the amount locked
-    event Locked(address user, uint amount);
+    event Locked(address user, uint256 amount);
     ///@notice Emitted when a user funds get unlocked, contains the user address and the amount unlocked
-    event Unlocked(address user, uint amount);
+    event Unlocked(address user, uint256 amount);
     ///@notice Emitted when a user funds get slashed, contains the user address and the amount slashed
-    event Slashed(address user, uint amount);
+    event Slashed(address user, uint256 amount);
     ///@notice Emitted when a user claims rewards, contains the user address and the amount claimed
-    event RewardsClaimed(address user, uint amount);
+    event RewardsClaimed(address user, uint256 amount);
     ///@notice Emitted when the contract configuration is changed, contains the address of the Shop, DAO and NFT contracts
     event NewConfig(address shop, address dao, address nft);
 
@@ -70,10 +70,10 @@ contract FP_Vault is AccessControl {
         @param user The address of the user to check
         @param amount The amount of funds to check
      */
-    modifier enoughStaked(address user, uint amount) { 
+    modifier enoughStaked(address user, uint256 amount) { 
         // Optimized version of the checks!
-        uint userStake = balance[user];
-        uint userLocked = lockedFunds[user];
+        uint256 userStake = balance[user];
+        uint256 userLocked = lockedFunds[user];
         assembly { 
             if iszero(userStake) {
                 mstore(0x00, "No staked funds!")
@@ -122,7 +122,7 @@ contract FP_Vault is AccessControl {
 
     ///@notice Unstake unlocked funds from the vault, the user must do it on their own
     ///@param amount The amount of funds to unstake 
-    function doUnstake(uint amount) external enoughStaked(msg.sender, amount) {	
+    function doUnstake(uint256 amount) external enoughStaked(msg.sender, amount) {	
         require(amount > 0, "Amount cannot be zero");
 
         balance[msg.sender] -= amount;
@@ -139,7 +139,7 @@ contract FP_Vault is AccessControl {
         @param user The address of the user that is selling
         @param amount The amount of funds to lock
      */
-    function doLock(address user, uint amount) external onlyRole(SHOP_ROLE) enoughStaked(user, amount) {
+    function doLock(address user, uint256 amount) external onlyRole(SHOP_ROLE) enoughStaked(user, amount) {
         require(amount > 0, "Amount cannot be zero");
         
         lockedFunds[user] += amount;
@@ -162,7 +162,7 @@ contract FP_Vault is AccessControl {
     ///@notice Slash funds if the user is considered malicious by the DAO
     ///@param badUser The address of the malicious user to be slashed
     function doSlash(address badUser) external onlyRole(DAO_ROLE) {
-        uint amount = balance[badUser];
+        uint256 amount = balance[badUser];
 
         balance[badUser] = 0;
         lockedFunds[badUser] = 0;
@@ -216,13 +216,13 @@ contract FP_Vault is AccessControl {
     /************************************** Internal *****************************************************************/
 
     ///@notice Sets a new maximum claimable amount per user based on the total slashed amount
-    function distributeSlashing(uint amount) internal {
+    function distributeSlashing(uint256 amount) internal {
         totalSlashed += amount;
 
         (, bytes memory data) = nftContract.call(abi.encodeWithSignature("totalPowersellers()"));
-        uint totalPowersellers = abi.decode(data, (uint256));
+        uint256 totalPowersellers = abi.decode(data, (uint256));
 
-        uint newMax = totalSlashed / totalPowersellers;
+        uint256 newMax = totalSlashed / totalPowersellers;
         max_claimable_amount = newMax;
     } 
 

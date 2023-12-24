@@ -19,7 +19,7 @@ interface IFP_Vault {
 
     ///@notice Unstake unlocked funds from the vault, the user must do it on their own
     ///@param amount The amount of funds to unstake 
-    function doUnstake(uint amount) external;
+    function doUnstake(uint256 amount) external;
 
 
     /**
@@ -27,11 +27,11 @@ interface IFP_Vault {
         @param user The address of the user that is selling
         @param amount The amount of funds to lock
      */
-    function doLock(address user, uint amount) external;
+    function doLock(address user, uint256 amount) external;
 
 
     ///@notice Unlock funds after the sale is completed
-    function doUnlock(address user, uint amount) external;
+    function doUnlock(address user, uint256 amount) external;
 
 
     ///@notice Slash funds if the user is considered malicious by the DAO
