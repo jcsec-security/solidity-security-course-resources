@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.13;
 
-import "./interfaces/IFP_Shop.sol";
-import "./interfaces/IFP_NFT.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IFP_DAO} from "./interfaces/IFP_DAO.sol";
+import {IFP_NFT} from "./interfaces/IFP_NFT.sol";
+import {IFP_Shop} from "./interfaces/IFP_Shop.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 
 /** 
@@ -14,13 +15,17 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
     @dev Security review is pending... should we deploy this?
     @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/solidity-security-teaching-resources
 */
-contract FP_DAO {
+contract FP_DAO is IFP_DAO {
+
+        /*************************************** Errors *******************************************************/
+    ///@notice Throwed if a zero address (0x0) is detected in an operation that does not permit it
+    error ZeroAddress();
     
         /************************************** Constants *******************************************************/
     ///@notice The threshold for the random number generator
-    uint256 constant THRESHOLD = 10;
+    uint256 public constant THRESHOLD = 10;
     ///@notice The default number of voters for passing a vote
-    uint256 constant DEFAULT_QUORUM = 100;
+    uint256 public constant DEFAULT_QUORUM = 100;
 
 
     /************************************** State vars and Structs *******************************************************/
@@ -61,8 +66,10 @@ contract FP_DAO {
     mapping(address => mapping(uint256 => Vote)) public hasVoted;
     ///@dev Mapping between disputeId and the result of the dispute.
     mapping(uint256 => Vote) public disputeResult;
+    ///@dev Mapping between user address and disputeId to record the lottery check.
+    mapping(address => mapping(uint256 => bool)) public hasCheckedLottery;
     ///@notice Password to access key features
-    string private password;
+    string private _password;
     ///@notice The address of the Shop contract
     address public shop_addr;
     ///@notice The Shop contract
@@ -72,7 +79,7 @@ contract FP_DAO {
     ///@notice The FPT token contract
     IERC20 public fptContract;
     ///@notice Min number of people to pass a proposal
-    uint256 quorum;
+    uint256 public quorum;
 
 
     /************************************** Events and modifiers *****************************************************/
@@ -95,7 +102,7 @@ contract FP_DAO {
      */
     modifier isAuthorized(string calldata magicWord) {
         require(
-            keccak256(abi.encodePacked(magicWord)) == keccak256(abi.encodePacked(password)),
+            keccak256(abi.encodePacked(magicWord)) == keccak256(abi.encodePacked(_password)),
             "Unauthorized");
         _;
     }
@@ -110,6 +117,33 @@ contract FP_DAO {
         _;
     }
 
+    /**
+        @notice Check if the address is not zero
+        @param toCheck The address to be checked
+     */
+    modifier notZero(address toCheck) {
+        assembly {
+            if iszero(toCheck) {
+                let ptr := mload(0x40)
+                mstore(ptr, 0xd92e233d00000000000000000000000000000000000000000000000000000000) // selector for error `ZeroAddress()`
+                revert(ptr, 0x4)
+            }
+        }
+        _;
+    }
+
+    /**
+        @notice Check if the caller has already checked the lottery for a dispute
+        @param user Caller's address
+        @param disputeId Id of the dispute
+     */
+    modifier notChecked(address user, uint256 disputeId) {
+        require(
+            !hasCheckedLottery[user][disputeId],
+            "User cannot check the lottery more than 1 time per dispute");
+        _;
+    }
+
 
     /************************************** External  ****************************************************************/ 
     
@@ -117,15 +151,15 @@ contract FP_DAO {
         @notice Constructor to set the password
         @param magicWord The password to access key features
         @param shop The address of the Shop contract
-        @param nft_addr The address of the NFT contract
-        @param fpt_addr The address of the FPT token
+        @param nftAddress The address of the NFT contract
+        @param fptAddress The address of the FPT token
      */
-    constructor(string memory magicWord, address shop, address nft_addr, address fpt_addr) {
-        password = magicWord;
+    constructor(string memory magicWord, address shop, address nftAddress, address fptAddress) {
+        _password = magicWord;
         shop_addr = shop;
         shopContract = IFP_Shop(shop_addr);
-        nftContract = IFP_NFT(nft_addr);
-        fptContract = IERC20(fpt_addr);
+        nftContract = IFP_NFT(nftAddress);
+        fptContract = IERC20(fptAddress);
     }
 
     /**
@@ -140,8 +174,8 @@ contract FP_DAO {
         string calldata newMagicWord, 
         address newShop,
         address newNft
-    ) external isAuthorized(magicWord) {
-        password = newMagicWord;
+    ) external isAuthorized(magicWord) notZero(newShop) notZero(newNft){ 
+        _password = newMagicWord;
         shop_addr = newShop;
         
         shopContract = IFP_Shop(shop_addr);
@@ -158,7 +192,7 @@ contract FP_DAO {
     function castVote(uint256 disputeId, bool vote) external { 
         require(hasVoted[msg.sender][disputeId] == Vote.DIDNT_VOTE , "You have already voted");
         
-        uint256 votingPower = calcVotingPower(msg.sender);
+        uint256 votingPower = _calcVotingPower(msg.sender);
 
         if (vote) {
             disputes[disputeId].votesFor += votingPower;
@@ -212,14 +246,14 @@ contract FP_DAO {
         uint256 itemId = disputes[disputeId].itemId;
 
         if (disputes[disputeId].votesFor > disputes[disputeId].votesAgainst) {
-            buyerWins(itemId);
+            delete disputes[disputeId];
+            _buyerWins(itemId);
             disputeResult[disputeId] = Vote.FOR;
         } else {
-            sellerWins(itemId);
+            delete disputes[disputeId];
+            _sellerWins(itemId);
             disputeResult[disputeId] = Vote.AGAINST;
         }
-        
-        delete disputes[disputeId];
 
         emit EndDispute(disputeId, itemId);
     }   
@@ -242,16 +276,25 @@ contract FP_DAO {
         @notice Randomly award an NFT to a user if they voten for the winning side
         @param disputeId The ID of the target dispute
      */
-    function checkLottery(uint256 disputeId) external { 
+    function checkLottery(uint256 disputeId) notChecked(msg.sender, disputeId) external { 
         require(hasVoted[msg.sender][disputeId] != Vote.DIDNT_VOTE, "User didn't vote");
-        
+        hasCheckedLottery[msg.sender][disputeId] = true;
         if(disputeResult[disputeId] == hasVoted[msg.sender][disputeId]) {
-            lotteryNFT(msg.sender);
+            _lotteryNFT(msg.sender);
         } else {
             revert("User voted for the wrong side");
         }
-
     }        
+
+    /************************************** Views *********************************************************************/
+
+    /**
+        @notice Query the details of a dispute
+        @param disputeId The ID of the target dispute
+     */
+	function queryDispute(uint256 disputeId) public view returns (Dispute memory) {
+		return disputes[disputeId];
+	}
 
     /************************************** Internal *****************************************************************/
     
@@ -259,7 +302,7 @@ contract FP_DAO {
         @notice Run a PRNG to award NFT to a user
         @param user The address of the elegible user
      */
-    function lotteryNFT(address user) internal { 
+    function _lotteryNFT(address user) internal { 
         uint256 randomNumber = uint8(
             uint256(
                 keccak256(
@@ -281,7 +324,7 @@ contract FP_DAO {
         @notice Resolve a dispute in favor of the buyer triggering the Shop's return item and refund logic
         @param itemId The ID of the item involved in the dispute
      */
-    function buyerWins(uint256 itemId) internal {
+    function _buyerWins(uint256 itemId) internal {
         shopContract.returnItem(itemId);
     }
 
@@ -289,26 +332,16 @@ contract FP_DAO {
         @notice Resolve a dispute in favor of the seller triggering the Shop's close sale dispute logic
         @param itemId The ID of the item involved in the dispute
      */
-    function sellerWins(uint256 itemId) internal {
+    function _sellerWins(uint256 itemId) internal {
         shopContract.endDispute(itemId);
     }
 
     /**
         @notice Calculate the voting power of a user
      */
-    function calcVotingPower(address user) internal returns (uint256) {
+    function _calcVotingPower(address user) internal returns (uint256) {
         return fptContract.balanceOf(user);
     } 
-
-    /************************************** Views *********************************************************************/
-
-    /**
-        @notice Query the details of a dispute
-        @param disputeId The ID of the target dispute
-     */
-	function query_dispute(uint256 disputeId) public view returns (Dispute memory) {
-		return disputes[disputeId];
-	}
 
 
 }

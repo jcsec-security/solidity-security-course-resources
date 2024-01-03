@@ -1,0 +1,6 @@
+[submodule "faillapop/lib/openzeppelin-contracts"]
+	path = faillapop/lib/openzeppelin-contracts
+	url = https://github.com/openzeppelin/openzeppelin-contracts
+[submodule "faillapop/lib/openzeppelin-contracts-upgradeable"]
+	path = faillapop/lib/openzeppelin-contracts-upgradeable
+	url = https://github.com/openzeppelin/openzeppelin-contracts-upgradeable

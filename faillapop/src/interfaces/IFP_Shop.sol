@@ -57,12 +57,17 @@ interface IFP_Shop {
      */
     function modifySale(uint256 itemId, string calldata newTitle, string calldata newDesc, uint256 newPrice) external;
 
+    /**
+        @notice Endpoint to cancel an active sale
+        @param itemId The ID of the item which sale is being cancelled
+    */
+    function cancelActiveSale (uint256 itemId) external;
 
     /**
         @notice Endpoint to set the vacation mode of a seller. If the seller is in vacation mode nobody can buy his goods
-        @param _vacationMode The new vacation mode of the seller
+        @param vacationMode The new vacation mode of the seller
      */
-    function setVacationMode(bool _vacationMode) external;
+    function setVacationMode(bool vacationMode) external;
 
 
     /**

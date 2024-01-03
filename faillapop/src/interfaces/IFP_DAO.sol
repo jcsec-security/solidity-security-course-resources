@@ -19,14 +19,15 @@ interface IFP_DAO {
     function updateConfig(
         string calldata magicWord, 
         string calldata newMagicWord, 
-        address newShop
+        address newShop,
+        address newNft
     ) external;
 
     /**
         @notice Cast a vote on a dispute
         @param disputeId The ID of the target dispute
      */
-    function castVote(uint256 disputeId) external;
+    function castVote(uint256 disputeId, bool vote) external;
 
     /**
         @notice Open a dispute

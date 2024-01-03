@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "./interfaces/IFP_DAO.sol";
-import "./interfaces/IFP_Shop.sol";
+import {IFP_DAO} from "./interfaces/IFP_DAO.sol";
+import {IFP_Shop} from "./interfaces/IFP_Shop.sol";
+import {IFP_Vault} from "./interfaces/IFP_Vault.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 
 /** 
@@ -15,16 +16,14 @@ import "./interfaces/IFP_Shop.sol";
     @dev Security review is pending... should we deploy this?
     @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/solidity-security-teaching-resources
 */
-contract FP_Vault is AccessControl {
+contract FP_Vault is IFP_Vault, AccessControl {
 
     /************************************** Constants *******************************************************/
 
-    ///@notice The admin role ID for the AccessControl contract
-    bytes32 constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     ///@notice The DAO role ID for the AccessControl contract
-    bytes32 constant DAO_ROLE = keccak256("DAO_ROLE");
+    bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
     ///@notice The Shop role ID for the AccessControl contract
-    bytes32 constant SHOP_ROLE = keccak256("SHOP_ROLE");
+    bytes32 public constant SHOP_ROLE = keccak256("SHOP_ROLE");
 
 
     /************************************** State vars  *******************************************************/
@@ -40,7 +39,7 @@ contract FP_Vault is AccessControl {
     ///@notice DAO contract
     IFP_DAO public daoContract;
     ///@notice Maximum claimable amount
-    uint256 public max_claimable_amount;
+    uint256 public maxClaimableAmount;
     ///@notice The amount of rewards claimed by each user
     mapping (address => uint256) public rewardsClaimed;
     ///@notice The total amount of funds slashed
@@ -61,8 +60,6 @@ contract FP_Vault is AccessControl {
     event Slashed(address user, uint256 amount);
     ///@notice Emitted when a user claims rewards, contains the user address and the amount claimed
     event RewardsClaimed(address user, uint256 amount);
-    ///@notice Emitted when the contract configuration is changed, contains the address of the Shop, DAO and NFT contracts
-    event NewConfig(address shop, address dao, address nft);
 
 
     /** 
@@ -101,7 +98,6 @@ contract FP_Vault is AccessControl {
         @param dao The address of the DAO contract
     */
     constructor(address token, address shop, address dao) {
-        _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(DAO_ROLE, dao);
         _grantRole(SHOP_ROLE, shop);
 
@@ -167,23 +163,9 @@ contract FP_Vault is AccessControl {
         balance[badUser] = 0;
         lockedFunds[badUser] = 0;
 
-        distributeSlashing(amount);
+        _distributeSlashing(amount);
 
         emit Slashed(badUser, amount);
-    }
-
-    /**
-        @notice Modify configuration parameters, only the owner can do it
-        @param newDao The address of the new DAO contract
-        @param newShop The address of the new Shop contract
-        @param newNft The address of the new NFT contract
-     */
-    function updateConfig(address newDao, address newShop, address newNft) external onlyRole(ADMIN_ROLE) {
-        daoContract = IFP_DAO(newDao);
-        shopContract = IFP_Shop(newShop);
-        nftContract = newNft;
-
-        emit NewConfig(newDao, newShop, newNft);
     }
 
  
@@ -200,31 +182,17 @@ contract FP_Vault is AccessControl {
             )
         );
         // Checks if the user has already claimed the maximum amount
-        require(rewardsClaimed[msg.sender] < max_claimable_amount, "Max claimable amount reached");        
+        require(rewardsClaimed[msg.sender] < maxClaimableAmount, "Max claimable amount reached");        
 
-        uint256 amount = max_claimable_amount - rewardsClaimed[msg.sender];
+        uint256 amount = maxClaimableAmount - rewardsClaimed[msg.sender];
 
         (bool success, ) = payable(msg.sender).call{value: amount}("");
         require(success, "Rewards payment failed");
 
-        rewardsClaimed[msg.sender] = max_claimable_amount;
+        rewardsClaimed[msg.sender] = maxClaimableAmount;
 
         emit RewardsClaimed(msg.sender, amount);
 	}
-
-
-    /************************************** Internal *****************************************************************/
-
-    ///@notice Sets a new maximum claimable amount per user based on the total slashed amount
-    function distributeSlashing(uint256 amount) internal {
-        totalSlashed += amount;
-
-        (, bytes memory data) = nftContract.call(abi.encodeWithSignature("totalPowersellers()"));
-        uint256 totalPowersellers = abi.decode(data, (uint256));
-
-        uint256 newMax = totalSlashed / totalPowersellers;
-        max_claimable_amount = newMax;
-    } 
 
 
     /************************************** Views  *******************************************************/
@@ -246,5 +214,19 @@ contract FP_Vault is AccessControl {
     ///@param user The address of the user to query
 	function userLockedBalance (address user) public view returns (uint256) {
 		return lockedFunds[user];
-	}    
+	} 
+
+
+    /************************************** Internal *****************************************************************/
+
+    ///@notice Sets a new maximum claimable amount per user based on the total slashed amount
+    function _distributeSlashing(uint256 amount) internal {
+        totalSlashed += amount;
+
+        (, bytes memory data) = nftContract.call(abi.encodeWithSignature("totalPowersellers()"));
+        uint256 totalPowersellers = abi.decode(data, (uint256));
+
+        uint256 newMax = totalSlashed / totalPowersellers;
+        maxClaimableAmount = newMax;
+    }    
 }
