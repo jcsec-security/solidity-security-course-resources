@@ -164,8 +164,8 @@ contract FP_Shop is IFP_Shop, AccessControl {
         @param buyerReasoning The reasoning of the buyer for the claim
      */
     function disputeSale(uint256 itemId, string calldata buyerReasoning) external {   
-        require(offeredItems[itemId].buyer == msg.sender, "Not the buyer");   
         require(offeredItems[itemId].state == State.Pending, "Item not pending");
+        require(offeredItems[itemId].buyer == msg.sender, "Not the buyer");   
 
         offeredItems[itemId].state = State.Disputed;
         offeredItems[itemId].buyTimestamp = 0;
@@ -276,9 +276,9 @@ contract FP_Shop is IFP_Shop, AccessControl {
         @notice Endpoint to cancel an active sale
         @param itemId The ID of the item which sale is being cancelled
     */
-    function cancelActiveSale (uint256 itemId) external { 
+    function cancelActiveSale (uint256 itemId) external {   
+        require(offeredItems[itemId].state == State.Selling, "Sale can't be cancelled");   
         require(offeredItems[itemId].seller == msg.sender, "Only the seller can cancel the sale");   
-        require(offeredItems[itemId].state == State.Selling, "Sale can't be cancelled");     
         
         //Seller should NOT be paid
         closeSale(itemId, false, false, true);
@@ -311,9 +311,9 @@ contract FP_Shop is IFP_Shop, AccessControl {
         @param itemId The ID of the item being disputed
         @param sellerReasoning The reasoning of the seller for the claim
      */
-    function disputedSaleReply(uint256 itemId, string calldata sellerReasoning) external {    
+    function disputedSaleReply(uint256 itemId, string calldata sellerReasoning) external { 
+        require(offeredItems[itemId].state == State.Disputed, "Item not disputed");     
         require(offeredItems[itemId].seller == msg.sender, "Not the seller"); 
-        require(offeredItems[itemId].state == State.Disputed, "Item not disputed");  
     
         _openDispute(itemId, sellerReasoning);
     }
