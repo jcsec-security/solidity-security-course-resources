@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import {IFP_DAO} from "./interfaces/IFP_DAO.sol";
 import {IFP_Shop} from "./interfaces/IFP_Shop.sol";
 import {IFP_Vault} from "./interfaces/IFP_Vault.sol";
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {AccessControl} from "@openzeppelin/contracts@v5.0.1/access/AccessControl.sol";
 
 
 /** 

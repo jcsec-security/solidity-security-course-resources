@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import {IFP_DAO} from "./interfaces/IFP_DAO.sol";
 import {IFP_NFT} from "./interfaces/IFP_NFT.sol";
 import {IFP_Shop} from "./interfaces/IFP_Shop.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts@v5.0.1/token/ERC20/IERC20.sol";
 
 
 /** 

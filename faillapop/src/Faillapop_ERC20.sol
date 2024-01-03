@@ -5,10 +5,10 @@ pragma solidity ^0.8.13;
 * Template ERC20 token for governance
 */
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {ERC20Burnable} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
+import {AccessControl} from "@openzeppelin/contracts@v5.0.1/access/AccessControl.sol";
+import {ERC20} from "@openzeppelin/contracts@v5.0.1/token/ERC20/ERC20.sol";
+import {ERC20Burnable} from "@openzeppelin/contracts@v5.0.1/token/ERC20/extensions/ERC20Burnable.sol";
+import {Pausable} from "@openzeppelin/contracts@v5.0.1/utils/Pausable.sol";
 
 contract FP_Token is ERC20, ERC20Burnable, Pausable, AccessControl {
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
