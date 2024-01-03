@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import {IFP_DAO} from "./interfaces/IFP_DAO.sol";
 import {IFP_NFT} from "./interfaces/IFP_NFT.sol";
 import {IFP_Shop} from "./interfaces/IFP_Shop.sol";
+import {AccessControl} from "@openzeppelin/contracts@v5.0.1/access/AccessControl.sol";
 import {IERC20} from "@openzeppelin/contracts@v5.0.1/token/ERC20/IERC20.sol";
 
 
@@ -15,7 +16,7 @@ import {IERC20} from "@openzeppelin/contracts@v5.0.1/token/ERC20/IERC20.sol";
     @dev Security review is pending... should we deploy this?
     @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/solidity-security-teaching-resources
 */
-contract FP_DAO is IFP_DAO {
+contract FP_DAO is IFP_DAO, AccessControl {
 
         /*************************************** Errors *******************************************************/
     ///@notice Throwed if a zero address (0x0) is detected in an operation that does not permit it
@@ -57,7 +58,10 @@ contract FP_DAO is IFP_DAO {
         AGAINST
     }
 
-
+    ///@notice The Control role ID for the AccessControl contract. At first it's the msg.sender and then the shop.
+    bytes32 public constant CONTROL_ROLE = keccak256("CONTROL_ROLE");
+    ///@notice Bool to check if the shop address has been set
+    bool private _shopSet = false;
     ///@notice Current disputes, indexed by disputeId
     mapping(uint256 => Dispute) public disputes;
     ///@notice The ID of the next dispute to be created
@@ -70,8 +74,6 @@ contract FP_DAO is IFP_DAO {
     mapping(address => mapping(uint256 => bool)) public hasCheckedLottery;
     ///@notice Password to access key features
     string private _password;
-    ///@notice The address of the Shop contract
-    address public shop_addr;
     ///@notice The Shop contract
     IFP_Shop public shopContract;
     ///@notice The NFT contract
@@ -108,12 +110,11 @@ contract FP_DAO is IFP_DAO {
     }
 
 
-    ///@notice Check if the caller is the Shop contract
-    modifier onlyShop() {
-		require(
-            msg.sender == shop_addr,
-            "Unauthorized"
-        );
+    /**
+        @notice Modifier to check if the Shop address has been set
+     */
+    modifier shopNotSet() {
+        require(!_shopSet, "Shop address already set");
         _;
     }
 
@@ -150,16 +151,24 @@ contract FP_DAO is IFP_DAO {
     /**
         @notice Constructor to set the password
         @param magicWord The password to access key features
-        @param shop The address of the Shop contract
         @param nftAddress The address of the NFT contract
         @param fptAddress The address of the FPT token
      */
-    constructor(string memory magicWord, address shop, address nftAddress, address fptAddress) {
+    constructor(string memory magicWord, address nftAddress, address fptAddress) {
         _password = magicWord;
-        shop_addr = shop;
-        shopContract = IFP_Shop(shop_addr);
+        _grantRole(CONTROL_ROLE, msg.sender);
         nftContract = IFP_NFT(nftAddress);
         fptContract = IERC20(fptAddress);
+    }
+
+    /**
+        @notice Sets the shop address as the new Control role
+        @param shopAddress  The address of the shop 
+    */
+    function setShop(address shopAddress ) external onlyRole(CONTROL_ROLE) shopNotSet{
+        _shopSet = true;
+        shopContract = IFP_Shop(shopAddress );
+        _grantRole(CONTROL_ROLE, shopAddress );
     }
 
     /**
@@ -176,12 +185,11 @@ contract FP_DAO is IFP_DAO {
         address newNft
     ) external isAuthorized(magicWord) notZero(newShop) notZero(newNft){ 
         _password = newMagicWord;
-        shop_addr = newShop;
         
-        shopContract = IFP_Shop(shop_addr);
+        shopContract = IFP_Shop(newShop);
         nftContract = IFP_NFT(newNft);
         
-        emit NewConfig(shop_addr, newNft);
+        emit NewConfig(newShop, newNft);
     }
 
     /**
@@ -217,7 +225,7 @@ contract FP_DAO is IFP_DAO {
         uint256 itemId, 
         string calldata buyerReasoning, 
         string calldata sellerReasoning
-    ) external onlyShop() returns (uint256) {     
+    ) external onlyRole(CONTROL_ROLE) returns (uint256) {     
         uint256 dId = nextDisputeId;
         nextDisputeId += 1;
 
@@ -263,7 +271,7 @@ contract FP_DAO is IFP_DAO {
         @notice Cancel an ongoing dispute. Either by the buyer or blacklisting (shop contract)
         @param disputeId The ID of the target dispute
      */
-    function cancelDispute(uint256 disputeId) external onlyShop() { 
+    function cancelDispute(uint256 disputeId) external onlyRole(CONTROL_ROLE) { 
         uint256 itemId = disputes[disputeId].itemId;     
                 
         delete disputes[disputeId];

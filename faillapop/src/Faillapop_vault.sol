@@ -22,12 +22,14 @@ contract FP_Vault is IFP_Vault, AccessControl {
 
     ///@notice The DAO role ID for the AccessControl contract
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
-    ///@notice The Shop role ID for the AccessControl contract
-    bytes32 public constant SHOP_ROLE = keccak256("SHOP_ROLE");
+    ///@notice The Shop role ID for the AccessControl contract. At first it's the msg.sender and then the shop.
+    bytes32 public constant CONTROL_ROLE = keccak256("CONTROL_ROLE");
 
 
     /************************************** State vars  *******************************************************/
     
+    ///@notice Bool to check if the shop address has been set
+    bool private _shopSet = false;
     ///@notice The balance of the users in the vault
     mapping (address => uint256) public balance;
     ///@notice The amount of funds locked for selling purposes
@@ -88,22 +90,38 @@ contract FP_Vault is IFP_Vault, AccessControl {
         _;
     }
 
+    /**
+        @notice Modifier to check if the Shop address has been set
+     */
+    modifier shopNotSet() {
+        require(!_shopSet, "Shop address already set");
+        _;
+    }
+
 
     /************************************** External  ****************************************************************/ 
 
     /**
         @notice Constructor, initializes the contract
         @param token The address of the powerseller NFT contract
-        @param shop The address of the Shop contract
         @param dao The address of the DAO contract
     */
-    constructor(address token, address shop, address dao) {
+    constructor(address token, address dao) {
         _grantRole(DAO_ROLE, dao);
-        _grantRole(SHOP_ROLE, shop);
+        _grantRole(CONTROL_ROLE, msg.sender);
 
         nftContract = token;
-        shopContract = IFP_Shop(shop);
         daoContract = IFP_DAO(dao);
+    }
+
+    /**
+        @notice Sets the shop address as the new Control role
+        @param shopAddress  The address of the shop contract
+    */
+    function setShop(address shopAddress ) external onlyRole(CONTROL_ROLE) shopNotSet{
+        _shopSet = true;
+        shopContract = IFP_Shop(shopAddress );
+        _grantRole(CONTROL_ROLE, shopAddress );
     }
 
 
@@ -135,7 +153,7 @@ contract FP_Vault is IFP_Vault, AccessControl {
         @param user The address of the user that is selling
         @param amount The amount of funds to lock
      */
-    function doLock(address user, uint256 amount) external onlyRole(SHOP_ROLE) enoughStaked(user, amount) {
+    function doLock(address user, uint256 amount) external onlyRole(CONTROL_ROLE) enoughStaked(user, amount) {
         require(amount > 0, "Amount cannot be zero");
         
         lockedFunds[user] += amount;
@@ -145,7 +163,7 @@ contract FP_Vault is IFP_Vault, AccessControl {
 
 
     ///@notice Unlock funds after the sale is completed
-    function doUnlock(address user, uint256 amount) external onlyRole(SHOP_ROLE) {
+    function doUnlock(address user, uint256 amount) external onlyRole(CONTROL_ROLE) {
         require(amount > 0, "Amount cannot be zero");
         require(amount <= lockedFunds[user], "Not enough locked funds");
 

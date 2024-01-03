@@ -13,6 +13,12 @@ pragma solidity ^0.8.13;
 */
 interface IFP_Vault {
 
+    /**
+        @notice Sets the shop address as the new Control role
+        @param shopAddress The address of the shop contract
+    */
+    function setShop(address shopAddress) external;
+
     ///@notice Stake attached funds in the vault for later locking, the users must do it on their own
     function doStake() external payable;
 	
