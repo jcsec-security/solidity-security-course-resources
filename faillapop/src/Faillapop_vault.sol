@@ -175,7 +175,7 @@ contract FP_Vault is IFP_Vault, AccessControl {
 
     ///@notice Slash funds if the user is considered malicious by the DAO
     ///@param badUser The address of the malicious user to be slashed
-    function doSlash(address badUser) external onlyRole(DAO_ROLE) {
+    function doSlash(address badUser) external onlyRole(CONTROL_ROLE) {
         uint256 amount = balance[badUser];
 
         balance[badUser] = 0;
