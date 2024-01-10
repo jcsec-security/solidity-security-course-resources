@@ -22,7 +22,7 @@ Some of the code snippets may draw heavily from open-source resources. If you be
 
 ## Collaboration
 
-On September 2023 the [NICS lab](https://www.nics.uma.es/) department from the [University of Malaga](https://www.uma.es/) agreed to help improving this repository as part of their efforts on Open Source collaboration. In particular, with new versions of the Failapop mock-audit environment, both improving the initial codebase and extending its features.
+On September 2023 the [NICS lab](https://www.nics.uma.es/) research group from the [University of Malaga](https://www.uma.es/) agreed to help improving this repository as part of their efforts on Open Source collaboration. In particular, with new versions of the Failapop mock-audit environment, both improving the initial codebase and extending its features.
 
 > [!IMPORTANT]  
 > Special thanks to Marco Lopez ([TW](https://twitter.com/Marcologonz), [LD](https://linkedin.com/in/marcologonz)) who took on this workload as part of his dissertation and to NICS Lab's researcher Isaac Agudo who supported and pushed for the initiative to come to success.
