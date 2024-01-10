@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-3.0 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
-import "./interfaces/IFP_DAO.sol";
-import "./interfaces/IFP_Shop.sol";
+import {IFP_DAO} from "./interfaces/IFP_DAO.sol";
+import {IFP_Shop} from "./interfaces/IFP_Shop.sol";
+import {IFP_Vault} from "./interfaces/IFP_Vault.sol";
+import {AccessControl} from "@openzeppelin/contracts@v5.0.1/access/AccessControl.sol";
 
 
 /** 
@@ -15,20 +16,20 @@ import "./interfaces/IFP_Shop.sol";
     @dev Security review is pending... should we deploy this?
     @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/solidity-security-teaching-resources
 */
-contract FP_Vault is AccessControl {
+contract FP_Vault is IFP_Vault, AccessControl {
 
     /************************************** Constants *******************************************************/
 
-    ///@notice The admin role ID for the AccessControl contract
-    bytes32 constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     ///@notice The DAO role ID for the AccessControl contract
-    bytes32 constant DAO_ROLE = keccak256("DAO_ROLE");
-    ///@notice The Shop role ID for the AccessControl contract
-    bytes32 constant SHOP_ROLE = keccak256("SHOP_ROLE");
+    bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
+    ///@notice The Shop role ID for the AccessControl contract. At first it's the msg.sender and then the shop.
+    bytes32 public constant CONTROL_ROLE = keccak256("CONTROL_ROLE");
 
 
     /************************************** State vars  *******************************************************/
     
+    ///@notice Bool to check if the shop address has been set
+    bool private _shopSet = false;
     ///@notice The balance of the users in the vault
     mapping (address => uint256) public balance;
     ///@notice The amount of funds locked for selling purposes
@@ -40,7 +41,7 @@ contract FP_Vault is AccessControl {
     ///@notice DAO contract
     IFP_DAO public daoContract;
     ///@notice Maximum claimable amount
-    uint256 public max_claimable_amount;
+    uint256 public maxClaimableAmount;
     ///@notice The amount of rewards claimed by each user
     mapping (address => uint256) public rewardsClaimed;
     ///@notice The total amount of funds slashed
@@ -61,8 +62,6 @@ contract FP_Vault is AccessControl {
     event Slashed(address user, uint256 amount);
     ///@notice Emitted when a user claims rewards, contains the user address and the amount claimed
     event RewardsClaimed(address user, uint256 amount);
-    ///@notice Emitted when the contract configuration is changed, contains the address of the Shop, DAO and NFT contracts
-    event NewConfig(address shop, address dao, address nft);
 
 
     /** 
@@ -91,23 +90,38 @@ contract FP_Vault is AccessControl {
         _;
     }
 
+    /**
+        @notice Modifier to check if the Shop address has been set
+     */
+    modifier shopNotSet() {
+        require(!_shopSet, "Shop address already set");
+        _;
+    }
+
 
     /************************************** External  ****************************************************************/ 
 
     /**
         @notice Constructor, initializes the contract
         @param token The address of the powerseller NFT contract
-        @param shop The address of the Shop contract
         @param dao The address of the DAO contract
     */
-    constructor(address token, address shop, address dao) {
-        _grantRole(ADMIN_ROLE, msg.sender);
+    constructor(address token, address dao) {
         _grantRole(DAO_ROLE, dao);
-        _grantRole(SHOP_ROLE, shop);
+        _grantRole(CONTROL_ROLE, msg.sender);
 
         nftContract = token;
-        shopContract = IFP_Shop(shop);
         daoContract = IFP_DAO(dao);
+    }
+
+    /**
+        @notice Sets the shop address as the new Control role
+        @param shopAddress  The address of the shop contract
+    */
+    function setShop(address shopAddress ) external onlyRole(CONTROL_ROLE) shopNotSet{
+        _shopSet = true;
+        shopContract = IFP_Shop(shopAddress );
+        _grantRole(CONTROL_ROLE, shopAddress );
     }
 
 
@@ -139,7 +153,7 @@ contract FP_Vault is AccessControl {
         @param user The address of the user that is selling
         @param amount The amount of funds to lock
      */
-    function doLock(address user, uint256 amount) external onlyRole(SHOP_ROLE) enoughStaked(user, amount) {
+    function doLock(address user, uint256 amount) external onlyRole(CONTROL_ROLE) enoughStaked(user, amount) {
         require(amount > 0, "Amount cannot be zero");
         
         lockedFunds[user] += amount;
@@ -149,7 +163,7 @@ contract FP_Vault is AccessControl {
 
 
     ///@notice Unlock funds after the sale is completed
-    function doUnlock(address user, uint256 amount) external onlyRole(SHOP_ROLE) {
+    function doUnlock(address user, uint256 amount) external onlyRole(CONTROL_ROLE) {
         require(amount > 0, "Amount cannot be zero");
         require(amount <= lockedFunds[user], "Not enough locked funds");
 
@@ -161,29 +175,15 @@ contract FP_Vault is AccessControl {
 
     ///@notice Slash funds if the user is considered malicious by the DAO
     ///@param badUser The address of the malicious user to be slashed
-    function doSlash(address badUser) external onlyRole(DAO_ROLE) {
+    function doSlash(address badUser) external onlyRole(CONTROL_ROLE) {
         uint256 amount = balance[badUser];
 
         balance[badUser] = 0;
         lockedFunds[badUser] = 0;
 
-        distributeSlashing(amount);
+        _distributeSlashing(amount);
 
         emit Slashed(badUser, amount);
-    }
-
-    /**
-        @notice Modify configuration parameters, only the owner can do it
-        @param newDao The address of the new DAO contract
-        @param newShop The address of the new Shop contract
-        @param newNft The address of the new NFT contract
-     */
-    function updateConfig(address newDao, address newShop, address newNft) external onlyRole(ADMIN_ROLE) {
-        daoContract = IFP_DAO(newDao);
-        shopContract = IFP_Shop(newShop);
-        nftContract = newNft;
-
-        emit NewConfig(newDao, newShop, newNft);
     }
 
  
@@ -200,31 +200,17 @@ contract FP_Vault is AccessControl {
             )
         );
         // Checks if the user has already claimed the maximum amount
-        require(rewardsClaimed[msg.sender] < max_claimable_amount, "Max claimable amount reached");        
+        require(rewardsClaimed[msg.sender] < maxClaimableAmount, "Max claimable amount reached");        
 
-        uint256 amount = max_claimable_amount - rewardsClaimed[msg.sender];
+        uint256 amount = maxClaimableAmount - rewardsClaimed[msg.sender];
 
         (bool success, ) = payable(msg.sender).call{value: amount}("");
         require(success, "Rewards payment failed");
 
-        rewardsClaimed[msg.sender] = max_claimable_amount;
+        rewardsClaimed[msg.sender] = maxClaimableAmount;
 
         emit RewardsClaimed(msg.sender, amount);
 	}
-
-
-    /************************************** Internal *****************************************************************/
-
-    ///@notice Sets a new maximum claimable amount per user based on the total slashed amount
-    function distributeSlashing(uint256 amount) internal {
-        totalSlashed += amount;
-
-        (, bytes memory data) = nftContract.call(abi.encodeWithSignature("totalPowersellers()"));
-        uint256 totalPowersellers = abi.decode(data, (uint256));
-
-        uint256 newMax = totalSlashed / totalPowersellers;
-        max_claimable_amount = newMax;
-    } 
 
 
     /************************************** Views  *******************************************************/
@@ -246,5 +232,19 @@ contract FP_Vault is AccessControl {
     ///@param user The address of the user to query
 	function userLockedBalance (address user) public view returns (uint256) {
 		return lockedFunds[user];
-	}    
+	} 
+
+
+    /************************************** Internal *****************************************************************/
+
+    ///@notice Sets a new maximum claimable amount per user based on the total slashed amount
+    function _distributeSlashing(uint256 amount) internal {
+        totalSlashed += amount;
+
+        (, bytes memory data) = nftContract.call(abi.encodeWithSignature("totalPowersellers()"));
+        uint256 totalPowersellers = abi.decode(data, (uint256));
+
+        uint256 newMax = totalSlashed / totalPowersellers;
+        maxClaimableAmount = newMax;
+    }    
 }

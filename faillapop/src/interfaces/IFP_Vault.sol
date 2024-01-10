@@ -13,6 +13,12 @@ pragma solidity ^0.8.13;
 */
 interface IFP_Vault {
 
+    /**
+        @notice Sets the shop address as the new Control role
+        @param shopAddress The address of the shop contract
+    */
+    function setShop(address shopAddress) external;
+
     ///@notice Stake attached funds in the vault for later locking, the users must do it on their own
     function doStake() external payable;
 	
@@ -37,14 +43,6 @@ interface IFP_Vault {
     ///@notice Slash funds if the user is considered malicious by the DAO
     ///@param badUser The address of the malicious user to be slashed
     function doSlash(address badUser) external;
-
-    /**
-        @notice Modify configuration parameters, only the owner can do it
-        @param newDao The address of the DAO contract
-        @param newShop The address of the Shop contract
-        @param newNft The address of the powerseller NFT contract
-     */
-    function updateConfig(address newDao, address newShop, address newNft) external;
 
  
     /**

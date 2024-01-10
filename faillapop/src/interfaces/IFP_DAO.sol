@@ -11,22 +11,31 @@ pragma solidity ^0.8.13;
 */
 interface IFP_DAO {
 
+     /**
+        @notice Sets the shop address as the new Control role
+        @param shopAddress The address of the shop 
+    */
+    function setShop(address shopAddress) external;
+
     /**
         @notice Update the contract's configuration details
         @param magicWord to authenticate as privileged user
         @param newMagicWord The new password to access key features
+        @param newShop The new address of the Shop contract
+        @param newNft The new address of the NFT contract
      */
     function updateConfig(
         string calldata magicWord, 
         string calldata newMagicWord, 
-        address newShop
+        address newShop,
+        address newNft
     ) external;
 
     /**
         @notice Cast a vote on a dispute
         @param disputeId The ID of the target dispute
      */
-    function castVote(uint256 disputeId) external;
+    function castVote(uint256 disputeId, bool vote) external;
 
     /**
         @notice Open a dispute
