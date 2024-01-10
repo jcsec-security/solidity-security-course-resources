@@ -17,30 +17,28 @@ The Faillapop protocol is a vulnerable-by-design protocol to help Web3 security 
 
 You will find common solidity security issues, dubious centralization and logical loopholes. Do not forget to think about others such as flash loans and Out-Of-Gas exceptions! 
 
-
 Try to perform a full mock-audit! Create your own professional report mimicking those of wellknown companies such as Oak Security, Trail of Bits, Hacken or Halborn. Imagine that you are getting paid for this and try to do the best job possible! not just finding bugs but also crafting proper paragraphs for your report. 
 
 
 Solutions are not provided along this repo but documentation has been created following the NatSpec format and the following diagram will help you get the grasp of the whole architecture.
 
 
-
 ![Faillapop diagram](Faillapop_diagram.png)
 
 
+> [!TIP]
+> Do not forget to run and analyze the testing suite. Sometimes you can spot vulnerabilities just by checking the bits that were neglected during testing and ensuring they behave as expected.
 
 ## Next steps
 
-The current version is `v0.2`. At the moment I would like to achieve the below in order to upgrade it:
+The current version is `v0.8`. At the moment I would like to achieve the below in order to upgrade it:
 
 
 :pushpin:`V1.0`
 
-- Add test cases
 - Add secret voting
 - Add NFT contract, cool NFTs will boost voting power
 - Populate template ERC20
-- Load mappings in assembly
 
 
 :pushpin:`V2.0`
