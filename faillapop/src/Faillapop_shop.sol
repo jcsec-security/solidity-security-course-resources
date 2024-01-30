@@ -49,9 +49,9 @@ contract FP_Shop is IFP_Shop, AccessControl {
         address buyer;
         string title;
         string description; 
-        uint price;
+        uint256 price;
         State state;
-        uint buyTimestamp;
+        uint256 buyTimestamp;
     }  
 
     /**

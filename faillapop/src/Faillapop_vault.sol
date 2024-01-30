@@ -255,8 +255,8 @@ contract FP_Vault is IFP_Vault, AccessControl {
 
     ///@notice Updates the maximum claimable amount based on the total slashed amount and the total powersellers
     ///@param totalPowersellers The total amount of powersellers
-    function _updateMaxClaimableAmount(uint totalPowersellers) internal {
-        uint newMax = totalSlashed / totalPowersellers;
+    function _updateMaxClaimableAmount(uint256 totalPowersellers) internal {
+        uint256 newMax = totalSlashed / totalPowersellers;
         maxClaimableAmount = newMax;
     }
 }

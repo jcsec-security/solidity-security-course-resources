@@ -309,7 +309,7 @@ contract FP_DAO is IFP_DAO, AccessControl {
         @notice Query the result of a dispute
         @param disputeId The ID of the target dispute
      */
-	function queryDisputeResult(uint disputeId) public view returns (Vote) {
+	function queryDisputeResult(uint256 disputeId) public view returns (Vote) {
 		return disputeResult[disputeId];
 	}  
 
