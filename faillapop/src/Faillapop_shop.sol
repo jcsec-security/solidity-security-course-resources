@@ -16,18 +16,8 @@ import {AccessControl} from "@openzeppelin/contracts@v5.0.1/access/AccessControl
 */
 contract FP_Shop is IFP_Shop, AccessControl {
 
-    /************************************** Constants *******************************************************/
-    ///@notice The admin role ID for the AccessControl contract
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-    ///@notice The DAO role ID for the AccessControl contract
-    bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
-    ///@notice The blacklisted role ID for the AccessControl contract
-    bytes32 public constant BLACKLISTED_ROLE = keccak256("BLACKLISTED_ROLE");
-    ///@notice The default number of voters for passing a vote
-    uint256 public constant MAX_PENDING_TIME = 30 days;
+    /************************************** Enum and structs *******************************************************/
 
-
-    /************************************** State vars and Structs *******************************************************/
     /**
         @dev A Sale can be in one of three states: 
         `Selling` deal still active
@@ -45,7 +35,6 @@ contract FP_Shop is IFP_Shop, AccessControl {
         Vacation
     }
 
-
     /**
         @dev A Sale struct represent each of the active sales in the shop.
         @param seller The address of the seller
@@ -60,11 +49,10 @@ contract FP_Shop is IFP_Shop, AccessControl {
         address buyer;
         string title;
         string description; 
-        uint256 price;
+        uint price;
         State state;
-        uint256 buyTimestamp;
+        uint buyTimestamp;
     }  
-
 
     /**
         @dev A Dispute struct represent each of the active disputes in the shop.
@@ -76,21 +64,39 @@ contract FP_Shop is IFP_Shop, AccessControl {
         uint256 disputeId;
         string buyerReasoning;
         string sellerReasoning;
-    }  
+    } 
+
+    /************************************** Constants *******************************************************/
+    ///@notice The admin role ID for the AccessControl contract
+    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    ///@notice The DAO role ID for the AccessControl contract
+    bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
+    ///@notice The blacklisted role ID for the AccessControl contract
+    bytes32 public constant BLACKLISTED_ROLE = keccak256("BLACKLISTED_ROLE");
+    ///@notice The default number of voters for passing a vote
+    uint256 public constant MAX_PENDING_TIME = 30 days;
 
 
+    /************************************** State vars *******************************************************/
+    
     ///@notice Mapping between the item ID and its Sale struct
     mapping (uint256 => Sale) public offeredItems;
     ///@notice The index of the next new Sale
     uint256 public  offerIndex;
+    ///@notice Mapping between the seller address and the number of valid sales
+    mapping (address => uint256) public numValidSales;
+    ///@notice Mapping between the seller address and the timestamp of the first valid sale
+    mapping (address => uint256) public firstValidSaleTimestamp;
     ///@notice Mapping between the item ID and its Dispute struct
     mapping (uint256 => Dispute) public disputedItems;
     ///@notice The list of blacklisted seller addresses
     address[] public blacklistedSellers;
+    ///@notice address of the PowersellerNFT contract
+    address public immutable powersellerContract;
     ///@notice Faillapop vault contract
-    IFP_Vault public vaultContract;
+    IFP_Vault public immutable vaultContract;
     ///@notice Faillapop DAO contract
-    IFP_DAO public daoContract;
+    IFP_DAO public immutable daoContract;
 
 
     /************************************** Events and modifiers *****************************************************/
@@ -126,11 +132,13 @@ contract FP_Shop is IFP_Shop, AccessControl {
         @notice Constructor of the contract
         @param daoAddress The address of the DAO contract
         @param vaultAddress The address of the Vault contract
+        @param powersellerNFT The address of the PowersellerNFT contract
      */
-    constructor(address daoAddress, address vaultAddress) {
+    constructor(address daoAddress, address vaultAddress, address powersellerNFT) {
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(DAO_ROLE, daoAddress);
 
+        powersellerContract = powersellerNFT;
         daoContract = IFP_DAO(daoAddress);
         vaultContract = IFP_Vault(vaultAddress);
     }
@@ -335,13 +343,30 @@ contract FP_Shop is IFP_Shop, AccessControl {
     }
 
     /**
+        @notice Endpoint to auto-claim the Powerseller badge. The user must have at least 10 valid sales and his first valid sale must be at least 5 weeks old
+     */
+    function claimPowersellerBadge() external { 
+        require(numValidSales[msg.sender] >= 10, "Not enough valid sales");
+        require(block.timestamp - firstValidSaleTimestamp[msg.sender] >= 5 weeks, "Not enough time has elapsed"); 
+        (bool success, ) = powersellerContract.call(
+            abi.encodeWithSignature(
+                "safeMint(address)",
+                msg.sender
+            )
+        );
+        require(success, "safeMint(address) call failed");
+    }
+
+    /**
         @notice Endpoint to remove a malicious sale and slash the stake. The owner of the contract can remove a malicious sale and blacklist the seller
         @param itemId The ID of the item which sale is considered malicious
      */
     function removeMaliciousSale(uint256 itemId) external onlyRole(ADMIN_ROLE) {
-        require(offeredItems[itemId].seller != address(0), "itemId does not exist");
+        address seller = offeredItems[itemId].seller;
+        require(seller != address(0), "itemId does not exist");
         
-        _blacklist(offeredItems[itemId].seller); 
+        _removePowersellerBadge(seller);
+        _blacklist(seller); 
 
         if (offeredItems[itemId].state == State.Pending) {
             closeSale(itemId, true, false, false);
@@ -396,6 +421,10 @@ contract FP_Shop is IFP_Shop, AccessControl {
         }
         // Seller payment
         if (paySeller) {
+            numValidSales[seller]++;
+            if(numValidSales[seller] == 1) {
+                firstValidSaleTimestamp[seller] = block.timestamp;
+            }
             (bool success, ) = payable(seller).call{value: price}("");  
             require(success, "Sale payment failed");
         }      
@@ -414,10 +443,40 @@ contract FP_Shop is IFP_Shop, AccessControl {
      */
     function _blacklist(address user) internal {
         grantRole(BLACKLISTED_ROLE, user);
+
+        numValidSales[user] = 0;
+        firstValidSaleTimestamp[user] = 0;
+
         //Slash the whole user stake
         vaultContract.doSlash(user);
 
         emit BlacklistSeller(user);
+    }
+
+    /**
+        @notice Remove the powerseller badge from a malicious seller
+        @param seller The address of the seller
+     */
+    function _removePowersellerBadge(address seller) internal {
+        (bool success, bytes memory data) = powersellerContract.call(
+            abi.encodeWithSignature(
+                "checkPrivilege(address)",
+                seller
+            )
+        ); 
+        require(success, "checkPrivilege() call failed");
+
+        bool sellerIsPowerseller = abi.decode(data, (bool));
+
+        if (sellerIsPowerseller) {
+            (success, ) = powersellerContract.call(
+                abi.encodeWithSignature(
+                    "removePowersellerNFT(address)",
+                    seller
+                )
+            );            
+            require(success, "removePowersellerNFT(address) call failed");
+        }        
     }
 
     /** 
