@@ -2,8 +2,11 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
+import {FP_CoolNFT} from "../../src/Faillapop_CoolNFT.sol";
 import {FP_DAO} from "../../src/Faillapop_DAO.sol";
+import {FP_PowersellerNFT} from "../../src/Faillapop_PowersellerNFT.sol";
 import {FP_Shop} from "../../src/Faillapop_shop.sol";
+import {FP_Token} from "../../src/Faillapop_ERC20.sol";
 import {FP_Vault} from "../../src/Faillapop_vault.sol";
 
 contract Faillapop_shop_Test is Test {
@@ -11,16 +14,17 @@ contract Faillapop_shop_Test is Test {
     FP_Shop public shop;
     FP_Vault public vault;
     FP_DAO public dao;
+    FP_Token public token;
+    FP_CoolNFT public coolNFT;
+    FP_PowersellerNFT public powersellerNFT;
 
-    address public constant NFT_ADDRESS = address(1);
-    address public constant FPT_ADDRESS = address(2);
     address public constant SELLER1 = address(3);
     address public constant BUYER1 = address(4);
     address public constant USER1 = address(5);
 
     /************************************* Modifiers *************************************/
 
-    modifier createLegitSale(){
+    modifier createLegitSale() {
         // Simulate an user's stake in the Vault
         vm.prank(SELLER1);
         vault.doStake{value: 2 ether}();
@@ -34,45 +38,45 @@ contract Faillapop_shop_Test is Test {
         _;
     }
 
-    modifier cancelLastActiveSale(){
+    modifier cancelLastActiveSale() {
         vm.prank(SELLER1);
         uint256 saleId = shop.offerIndex() - 1;
         shop.cancelActiveSale(saleId);
         _;
     }
 
-    modifier setVacationMode(){
+    modifier setVacationMode() {
         vm.prank(SELLER1);
         shop.setVacationMode(true);
         _;
     }
 
-    modifier buyLastItem(){
+    modifier buyLastItem() {
         uint256 saleId = shop.offerIndex() - 1;
         vm.prank(BUYER1);
         shop.doBuy{value: 1 ether}(saleId);
         _;
     }
 
-    modifier itemReceived(){
+    modifier itemReceived() {
         uint256 saleId = shop.offerIndex() - 1;
         vm.prank(BUYER1);
         shop.itemReceived(saleId);
         _;
     }
 
-    modifier disputeSale(){
+    modifier disputeSale() {
         vm.prank(BUYER1);
         shop.disputeSale(0, "Buyer's reasoning");
         _;
     }
-    modifier replyDisputedSale(){
+    modifier replyDisputedSale() {
         vm.prank(SELLER1);
         shop.disputedSaleReply(0, "Seller's reasoning");
         _;
     }
 
-    modifier doStake(address user, uint256 amount){
+    modifier doStake(address user, uint256 amount) {
         vm.prank(user);
         vault.doStake{value: amount}();
         _;
@@ -81,20 +85,26 @@ contract Faillapop_shop_Test is Test {
     /************************************** Set Up **************************************/
 
     function setUp() external {
-        vm.deal(SELLER1, 10 ether);
-        vm.deal(BUYER1, 10 ether);
-        vm.deal(USER1, 10 ether);
+        vm.deal(SELLER1, 15 ether);
+        vm.deal(BUYER1, 15 ether);
+        vm.deal(USER1, 15 ether);
 
-        dao = new FP_DAO("password", NFT_ADDRESS, FPT_ADDRESS);
-        vault = new FP_Vault(FPT_ADDRESS, address(dao));
-        shop = new FP_Shop(address(dao), address(vault));
+        token = new FP_Token();
+        coolNFT = new FP_CoolNFT();
+        powersellerNFT = new FP_PowersellerNFT();
+        dao = new FP_DAO("password", address(coolNFT), address(token));
+        vault = new FP_Vault(address(powersellerNFT), address(dao));
+        shop = new FP_Shop(address(dao), address(vault), address(powersellerNFT));
+
         vault.setShop(address(shop));
         dao.setShop(address(shop));
+        powersellerNFT.setShop(address(shop));
+        coolNFT.setDAO(address(dao));
     }
 
     /************************************** Tests **************************************/    
 
-    function test_doBuy() public createLegitSale(){
+    function test_doBuy() public createLegitSale() {
         // Buy item
         vm.prank(BUYER1);
         shop.doBuy{value: 1 ether}(0);
@@ -136,7 +146,7 @@ contract Faillapop_shop_Test is Test {
         shop.doBuy{value: 1 ether}(0);
     }
 
-    function test_disputeSale() public createLegitSale() buyLastItem(){
+    function test_disputeSale() public createLegitSale() buyLastItem() {
         // Dispute sale
         vm.prank(BUYER1);
         shop.disputeSale(0, "Buyer's reasoning");
@@ -184,7 +194,7 @@ contract Faillapop_shop_Test is Test {
         vm.expectRevert(bytes("Item not pending"));
         shop.disputeSale(0, "Buyer's reasoning");
     }
-    function test_disputeSale_RevertIf_SaleIsDisputed() public createLegitSale() buyLastItem() disputeSale(){
+    function test_disputeSale_RevertIf_SaleIsDisputed() public createLegitSale() buyLastItem() disputeSale() {
         // Dispute sale
         vm.prank(BUYER1);
         vm.expectRevert(bytes("Item not pending"));
@@ -255,7 +265,7 @@ contract Faillapop_shop_Test is Test {
         shop.itemReceived(0);
     }
 
-    function test_endDispute_FromBuyer() public createLegitSale() buyLastItem() disputeSale(){
+    function test_endDispute_FromBuyer() public createLegitSale() buyLastItem() disputeSale() {
         uint256 balanceSellerBefore = address(SELLER1).balance;
         uint256 sellerFundsLockedBefore = vault.userLockedBalance(SELLER1);
         FP_Shop.Sale memory sale = shop.querySale(0);
@@ -282,7 +292,7 @@ contract Faillapop_shop_Test is Test {
         assertEq(dispute.sellerReasoning, "", "Wrong sellerReasoning, end dispute failed");
     }
 
-    function test_endDispute_FromDao() public createLegitSale() buyLastItem() disputeSale(){
+    function test_endDispute_FromDao() public createLegitSale() buyLastItem() disputeSale() {
         uint256 balanceSellerBefore = address(SELLER1).balance;
         uint256 sellerFundsLockedBefore = vault.userLockedBalance(SELLER1);
         FP_Shop.Sale memory sale = shop.querySale(0);
@@ -309,14 +319,14 @@ contract Faillapop_shop_Test is Test {
         assertEq(dispute.sellerReasoning, "", "Wrong sellerReasoning, end dispute failed");
     }
 
-    function test_endDispute_RevertIf_SaleIsUndefined() public{
+    function test_endDispute_RevertIf_SaleIsUndefined() public {
         // End dispute
         vm.prank(address(dao));
         vm.expectRevert(bytes("Dispute not found"));
         shop.endDispute(0);
     }
 
-    function test_endDispute_RevertIf_SaleIsSelling() createLegitSale() public {
+    function test_endDispute_RevertIf_SaleIsSelling() public createLegitSale() {
         // End dispute
         vm.prank(address(dao));
         vm.expectRevert(bytes("Dispute not found"));
@@ -344,7 +354,7 @@ contract Faillapop_shop_Test is Test {
         shop.endDispute(0);
     }
 
-    function test_newSale() public doStake(SELLER1, 2 ether){
+    function test_newSale() public doStake(SELLER1, 2 ether) {
         // Get initial locked funds
         uint256 lockedFundsBefore = vault.userLockedBalance(SELLER1);
 
@@ -441,10 +451,10 @@ contract Faillapop_shop_Test is Test {
 
         // Check seller's funds locked in the Vault
         uint256 priceDifference;
-        if(previousSale.price > newPrice){
+        if(previousSale.price > newPrice) {
             priceDifference = previousSale.price - newPrice;
             assertEq(vault.userLockedBalance(SELLER1), sellerPreviousLockedFunds - priceDifference, "Funds not correctly unlocked");
-        }else if(previousSale.price <= newPrice){
+        }else if(previousSale.price <= newPrice) {
             priceDifference = newPrice - previousSale.price;
             assertEq(vault.userLockedBalance(SELLER1), sellerPreviousLockedFunds + priceDifference, "Funds not correctly locked");
         }
@@ -518,7 +528,7 @@ contract Faillapop_shop_Test is Test {
         vm.expectRevert(bytes("Sale can't be modified"));
         shop.modifySale(0, newTitle, newDescription, newPrice);
     }
-    function test_modifySale_RevertIf_SaleIsSold() public createLegitSale() buyLastItem() itemReceived(){ 
+    function test_modifySale_RevertIf_SaleIsSold() public createLegitSale() buyLastItem() itemReceived() { 
         // Modify sale
         string memory newTitle = "New Test Item";
         string memory newDescription = "This is a new test item";
@@ -608,7 +618,7 @@ contract Faillapop_shop_Test is Test {
         shop.cancelActiveSale(0);
     }
     
-    function test_setVacationMode() public createLegitSale(){
+    function test_setVacationMode() public createLegitSale() {
         // Check sale state (Selling)
         (,,,,,FP_Shop.State state,) = shop.offeredItems(0);
         assertEq(uint(state), uint(FP_Shop.State.Selling), "Initial sale state not correct");
@@ -731,13 +741,108 @@ contract Faillapop_shop_Test is Test {
         shop.returnItem(0);
     }
 
+    function test_claimPowersellerBadge() public {
+        //Lets recreate 10 valid sales
+        vm.prank(SELLER1);
+        vault.doStake{value: 10 ether}();
+        for(uint i = 0; i < 10; i++) {
+            // New sale 
+            string memory title = "Test Item";
+            string memory description = "This is a test item";
+            uint256 price = 0.5 ether;  
+              
+            vm.prank(SELLER1);
+            shop.newSale(title, description, price);
+            
+            uint256 saleId = shop.offerIndex() - 1;
+            vm.startPrank(BUYER1);
+            shop.doBuy{value: 0.5 ether}(saleId);
+            shop.itemReceived(saleId);
+            vm.stopPrank();
+        }
+        
+        assertEq(shop.numValidSales(SELLER1), 10, "Seller should have 10 valid sales");
+        assertEq(powersellerNFT.totalPowersellers(), 0, "TotalPowerseller should be 0");
+        assertEq(powersellerNFT.balanceOf(SELLER1), 0, "Seller should not have the badge yet");
+        assertFalse(powersellerNFT.checkPrivilege(SELLER1), "Seller should not have the badge yet");
+
+        vm.warp(block.timestamp + 6 weeks);
+        vm.prank(SELLER1);
+        shop.claimPowersellerBadge();
+        
+        assertEq(powersellerNFT.balanceOf(SELLER1), 1, "Powerseller badge not minted correctly");
+        assertTrue(powersellerNFT.checkPrivilege(SELLER1), "Powerseller badge not minted correctly");
+        assertEq(powersellerNFT.totalPowersellers(), 1, "Powerseller badge not minted correctly");
+    }
+
+    function test_claimPowersellerBadge_RevertIf_NotEnoughTimeElapsed() public {
+        //Lets recreate 10 valid sales
+        vm.prank(SELLER1);
+        vault.doStake{value: 10 ether}();
+        for(uint i = 0; i < 10; i++) {
+            // New sale 
+            string memory title = "Test Item";
+            string memory description = "This is a test item";
+            uint256 price = 0.5 ether;  
+              
+            vm.prank(SELLER1);
+            shop.newSale(title, description, price);
+            
+            uint256 saleId = shop.offerIndex() - 1;
+            vm.startPrank(BUYER1);
+            shop.doBuy{value: 0.5 ether}(saleId);
+            shop.itemReceived(saleId);
+            vm.stopPrank();
+        }
+        
+        assertEq(shop.numValidSales(SELLER1), 10, "Seller should have 10 valid sales");
+        assertEq(powersellerNFT.totalPowersellers(), 0, "TotalPowerseller should be 0");
+        assertEq(powersellerNFT.balanceOf(SELLER1), 0, "Seller should not have the badge yet");
+        assertFalse(powersellerNFT.checkPrivilege(SELLER1), "Seller should not have the badge yet");
+
+        vm.warp(block.timestamp + 4 weeks);
+        vm.expectRevert(bytes("Not enough time has elapsed"));
+        vm.prank(SELLER1);
+        shop.claimPowersellerBadge();
+    }
+
+    function test_claimPowersellerBadge_RevertIf_NotEnoughValidSales() public createLegitSale() buyLastItem() itemReceived() {
+        vm.warp(block.timestamp + 6 weeks);
+        vm.expectRevert(bytes("Not enough valid sales"));
+        vm.prank(SELLER1);
+        shop.claimPowersellerBadge();
+    }
+
+    function test_claimPowersellerBadge_RevertIf_SellerIsPowerseller() public {
+        //Lets recreate 10 valid sales
+        vm.prank(SELLER1);
+        vault.doStake{value: 10 ether}();
+        for(uint i = 0; i < 10; i++) {
+            // New sale 
+            string memory title = "Test Item";
+            string memory description = "This is a test item";
+            uint256 price = 0.5 ether;  
+              
+            vm.prank(SELLER1);
+            shop.newSale(title, description, price);
+            
+            uint256 saleId = shop.offerIndex() - 1;
+            vm.startPrank(BUYER1);
+            shop.doBuy{value: 0.5 ether}(saleId);
+            shop.itemReceived(saleId);
+            vm.stopPrank();
+        }
+
+        vm.warp(block.timestamp + 6 weeks);
+        vm.prank(SELLER1);
+        shop.claimPowersellerBadge();
+
+        vm.expectRevert(bytes("safeMint(address) call failed"));
+        vm.prank(SELLER1);
+        shop.claimPowersellerBadge();
+    }
+
     function test_removeMaliciousSale() public createLegitSale() {  
-        // Get amount of funds locked in the Vault by the seller
-        uint256 sellerLockedFundsBefore = vault.userLockedBalance(SELLER1);   
-
-        // Get sale price
-        FP_Shop.Sale memory maliciousSale = shop.querySale(0);
-
         // Remove malicious sale
         shop.removeMaliciousSale(0);
 
@@ -750,9 +855,66 @@ contract Faillapop_shop_Test is Test {
         assertEq(actualSale.price, 0, "Wrong price, malicious sale removal failed");
         assertEq(uint(actualSale.state), uint(FP_Shop.State.Undefined), "Wrong state, malicious sale removal failed");
         assertEq(actualSale.buyTimestamp, 0, "Wrong timestamp, malicious sale removal failed");
+        assertEq(shop.firstValidSaleTimestamp(SELLER1), 0, "Wrong firstValidSaleTimestamp, malicious sale removal failed");
 
         // Check seller's funds locked in the Vault
-        assertEq(vault.userLockedBalance(SELLER1), sellerLockedFundsBefore - maliciousSale.price, "Funds not correctly unlocked"); 
+        assertEq(vault.userLockedBalance(SELLER1), 0, "Funds not correctly slashed"); 
+    }
+
+    function test_removeMaliciousSale_FromPowerseller() public createLegitSale() {  
+        //Lets recreate 10 valid sales
+        vm.prank(SELLER1);
+        vault.doStake{value: 10 ether}();
+        for(uint i = 0; i < 10; i++) {
+            // New sale 
+            string memory title = "Test Item";
+            string memory description = "This is a test item";
+            uint256 price = 0.5 ether;  
+              
+            vm.prank(SELLER1);
+            shop.newSale(title, description, price);
+            
+            uint256 saleId = shop.offerIndex() - 1;
+            vm.startPrank(BUYER1);
+            shop.doBuy{value: 0.5 ether}(saleId);
+            shop.itemReceived(saleId);
+            vm.stopPrank();
+        }
+
+        //Claim powerseller badge
+        vm.warp(block.timestamp + 6 weeks);
+        vm.prank(SELLER1);
+        shop.claimPowersellerBadge();
+
+        //Check powerseller badge
+        assertEq(powersellerNFT.balanceOf(SELLER1), 1, "Seller should not have the badge yet");
+        assertTrue(powersellerNFT.checkPrivilege(SELLER1), "Powerseller badge not minted correctly");
+        
+        //Create malicious sale
+        vm.prank(SELLER1);
+        shop.newSale("Sale", "This is a malicious sale", 0.5 ether);
+        
+        uint256 maliciousSaleId = shop.offerIndex() - 1; 
+        
+        // Remove malicious sale
+        shop.removeMaliciousSale(maliciousSaleId);
+
+        // Check sale cancellation
+        FP_Shop.Sale memory actualSale = shop.querySale(maliciousSaleId);
+        assertEq(actualSale.seller, address(0), "Wrong seller, malicious sale removal failed");
+        assertEq(actualSale.buyer, address(0), "Wrong buyer, malicious sale removal failed");
+        assertEq(actualSale.title, "", "Wrong title, malicious sale removal failed");
+        assertEq(actualSale.description, "", "Wrong description, malicious sale removal failed");
+        assertEq(actualSale.price, 0, "Wrong price, malicious sale removal failed");
+        assertEq(uint(actualSale.state), uint(FP_Shop.State.Undefined), "Wrong state, malicious sale removal failed");
+        assertEq(actualSale.buyTimestamp, 0, "Wrong timestamp, malicious sale removal failed");
+
+        // Check seller's funds locked in the Vault
+        assertEq(vault.userLockedBalance(SELLER1), 0, "Funds not correctly slashed"); 
+    
+        //Check powerseller badge
+        assertEq(powersellerNFT.balanceOf(SELLER1), 0, "Seller should not have the badge yet");
+        assertFalse(powersellerNFT.checkPrivilege(SELLER1), "Powerseller badge not minted correctly");
     }
 
     function test_removeMaliciousSale_RevertIf_CallerIsNotTheAdmin() public createLegitSale() {
