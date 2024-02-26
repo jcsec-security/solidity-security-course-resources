@@ -35,11 +35,11 @@ contract FP_Vault is IFP_Vault, AccessControl {
     ///@notice The amount of funds locked for selling purposes
     mapping (address => uint256) public lockedFunds;
     ///@notice address of the NFT contract
-    address public nftContract;
+    address public immutable powersellerContract;
     ///@notice Shop contract
     IFP_Shop public shopContract;
     ///@notice DAO contract
-    IFP_DAO public daoContract;
+    IFP_DAO public immutable daoContract;
     ///@notice Maximum claimable amount
     uint256 public maxClaimableAmount;
     ///@notice The amount of rewards claimed by each user
@@ -103,14 +103,14 @@ contract FP_Vault is IFP_Vault, AccessControl {
 
     /**
         @notice Constructor, initializes the contract
-        @param token The address of the powerseller NFT contract
+        @param powersellerNFT The address of the powerseller NFT contract
         @param dao The address of the DAO contract
     */
-    constructor(address token, address dao) {
+    constructor(address powersellerNFT, address dao) {
         _grantRole(DAO_ROLE, dao);
         _grantRole(CONTROL_ROLE, msg.sender);
 
-        nftContract = token;
+        powersellerContract = powersellerNFT;
         daoContract = IFP_DAO(dao);
     }
 
@@ -118,10 +118,10 @@ contract FP_Vault is IFP_Vault, AccessControl {
         @notice Sets the shop address as the new Control role
         @param shopAddress  The address of the shop contract
     */
-    function setShop(address shopAddress ) external onlyRole(CONTROL_ROLE) shopNotSet{
+    function setShop(address shopAddress) external onlyRole(CONTROL_ROLE) shopNotSet {
         _shopSet = true;
-        shopContract = IFP_Shop(shopAddress );
-        _grantRole(CONTROL_ROLE, shopAddress );
+        shopContract = IFP_Shop(shopAddress);
+        _grantRole(CONTROL_ROLE, shopAddress);
     }
 
 
@@ -193,7 +193,7 @@ contract FP_Vault is IFP_Vault, AccessControl {
      */
     function claimRewards() external {
         // Checks if the user is elegible
-        nftContract.call(
+        powersellerContract.call(
             abi.encodeWithSignature(
                 "checkPrivilege(address)",
                 msg.sender
@@ -241,10 +241,22 @@ contract FP_Vault is IFP_Vault, AccessControl {
     function _distributeSlashing(uint256 amount) internal {
         totalSlashed += amount;
 
-        (, bytes memory data) = nftContract.call(abi.encodeWithSignature("totalPowersellers()"));
+        (bool success, bytes memory data) = powersellerContract.call(
+            abi.encodeWithSignature(
+                "totalPowersellers()"
+            )
+        ); 
+        require(success, "totalPowersellers() call failed");        
         uint256 totalPowersellers = abi.decode(data, (uint256));
+        if(totalPowersellers > 0) {
+            _updateMaxClaimableAmount(totalPowersellers);
+        }
+    }    
 
+    ///@notice Updates the maximum claimable amount based on the total slashed amount and the total powersellers
+    ///@param totalPowersellers The total amount of powersellers
+    function _updateMaxClaimableAmount(uint256 totalPowersellers) internal {
         uint256 newMax = totalSlashed / totalPowersellers;
         maxClaimableAmount = newMax;
-    }    
+    }
 }

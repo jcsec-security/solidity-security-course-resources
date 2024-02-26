@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {IFP_DAO} from "./interfaces/IFP_DAO.sol";
-import {IFP_NFT} from "./interfaces/IFP_NFT.sol";
+import {IFP_CoolNFT} from "./interfaces/IFP_CoolNFT.sol";
 import {IFP_Shop} from "./interfaces/IFP_Shop.sol";
 import {AccessControl} from "@openzeppelin/contracts@v5.0.1/access/AccessControl.sol";
 import {IERC20} from "@openzeppelin/contracts@v5.0.1/token/ERC20/IERC20.sol";
@@ -72,14 +72,14 @@ contract FP_DAO is IFP_DAO, AccessControl {
     mapping(uint256 => Vote) public disputeResult;
     ///@dev Mapping between user address and disputeId to record the lottery check.
     mapping(address => mapping(uint256 => bool)) public hasCheckedLottery;
-    ///@notice Password to access key features
+    ///@notice _password to access key features
     string private _password;
     ///@notice The Shop contract
     IFP_Shop public shopContract;
-    ///@notice The NFT contract
-    IFP_NFT public nftContract;
+    ///@notice The CoolNFT contract
+    IFP_CoolNFT public coolNFTContract;
     ///@notice The FPT token contract
-    IERC20 public fptContract;
+    IERC20 public immutable fptContract;
     ///@notice Min number of people to pass a proposal
     uint256 public quorum;
 
@@ -157,7 +157,7 @@ contract FP_DAO is IFP_DAO, AccessControl {
     constructor(string memory magicWord, address nftAddress, address fptAddress) {
         _password = magicWord;
         _grantRole(CONTROL_ROLE, msg.sender);
-        nftContract = IFP_NFT(nftAddress);
+        coolNFTContract = IFP_CoolNFT(nftAddress);
         fptContract = IERC20(fptAddress);
     }
 
@@ -165,10 +165,10 @@ contract FP_DAO is IFP_DAO, AccessControl {
         @notice Sets the shop address as the new Control role
         @param shopAddress  The address of the shop 
     */
-    function setShop(address shopAddress ) external onlyRole(CONTROL_ROLE) shopNotSet{
+    function setShop(address shopAddress) external onlyRole(CONTROL_ROLE) shopNotSet {
         _shopSet = true;
-        shopContract = IFP_Shop(shopAddress );
-        _grantRole(CONTROL_ROLE, shopAddress );
+        shopContract = IFP_Shop(shopAddress);
+        _grantRole(CONTROL_ROLE, shopAddress);
     }
 
     /**
@@ -187,7 +187,7 @@ contract FP_DAO is IFP_DAO, AccessControl {
         _password = newMagicWord;
         
         shopContract = IFP_Shop(newShop);
-        nftContract = IFP_NFT(newNft);
+        coolNFTContract = IFP_CoolNFT(newNft);
         
         emit NewConfig(newShop, newNft);
     }
@@ -201,6 +201,7 @@ contract FP_DAO is IFP_DAO, AccessControl {
         require(hasVoted[msg.sender][disputeId] == Vote.DIDNT_VOTE , "You have already voted");
         
         uint256 votingPower = _calcVotingPower(msg.sender);
+        require(votingPower > 0, "You have no voting power");
 
         if (vote) {
             disputes[disputeId].votesFor += votingPower;
@@ -284,7 +285,7 @@ contract FP_DAO is IFP_DAO, AccessControl {
         @notice Randomly award an NFT to a user if they voten for the winning side
         @param disputeId The ID of the target dispute
      */
-    function checkLottery(uint256 disputeId) notChecked(msg.sender, disputeId) external { 
+    function checkLottery(uint256 disputeId) external notChecked(msg.sender, disputeId) { 
         require(hasVoted[msg.sender][disputeId] != Vote.DIDNT_VOTE, "User didn't vote");
         hasCheckedLottery[msg.sender][disputeId] = true;
         if(disputeResult[disputeId] == hasVoted[msg.sender][disputeId]) {
@@ -302,7 +303,15 @@ contract FP_DAO is IFP_DAO, AccessControl {
      */
 	function queryDispute(uint256 disputeId) public view returns (Dispute memory) {
 		return disputes[disputeId];
-	}
+	} 
+
+    /**
+        @notice Query the result of a dispute
+        @param disputeId The ID of the target dispute
+     */
+	function queryDisputeResult(uint256 disputeId) public view returns (Vote) {
+		return disputeResult[disputeId];
+	}  
 
     /************************************** Internal *****************************************************************/
     
@@ -321,8 +330,7 @@ contract FP_DAO is IFP_DAO, AccessControl {
         ))));
 
         if (randomNumber < THRESHOLD) {
-            nftContract.mintCoolNFT(user);
-            
+            coolNFTContract.mintCoolNFT(user);            
         }
 
         emit AwardNFT(user);  
@@ -347,7 +355,7 @@ contract FP_DAO is IFP_DAO, AccessControl {
     /**
         @notice Calculate the voting power of a user
      */
-    function _calcVotingPower(address user) internal returns (uint256) {
+    function _calcVotingPower(address user) internal view returns (uint256) {
         return fptContract.balanceOf(user);
     } 
 

@@ -86,6 +86,11 @@ interface IFP_Shop {
     function returnItem(uint256 itemId) external;
 
     /**
+        @notice Endpoint to auto-claim the Powerseller badge. The user must have at least 10 valid sales
+     */
+    function claimPowersellerBadge() external;
+
+    /**
         @notice Endpoint to remove a malicious sale and slash the stake. The owner of the contract can remove a malicious sale and blacklist the seller
         @param itemId The ID of the item which sale is considered malicious
      */
