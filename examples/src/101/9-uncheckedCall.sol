@@ -22,7 +22,7 @@ contract BuyMeNFT is ERC721, ERC721Enumerable {
 
 	function mint() external payable {
         // Requires 10 UMA tokens to mint an NFT
-		uma_tkn.transferFrom(msg.sender, 10);
+		uma_tkn.transferFrom(msg.sender, address(this), 10);
 
         uint256 tokenId = _nextTokenId++;		
 		_safeMint(msg.sender, tokenId);
