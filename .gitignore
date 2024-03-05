@@ -10,4 +10,5 @@ out/
 # Dotenv file
 .env
 
-lib/
+# Foundry modules
+lib/*

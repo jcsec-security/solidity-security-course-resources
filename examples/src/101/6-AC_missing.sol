@@ -13,6 +13,7 @@ contract Example6_1 is Ownable {
     mapping (address => uint256) balance;
     mapping (address => uint256) blockstamp;
 	
+	constructor() Ownable(msg.sender) {}
 
     function deposit() external payable {
         balance[msg.sender] += msg.value;

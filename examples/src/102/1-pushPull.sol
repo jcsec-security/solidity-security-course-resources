@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
-pragma solidity 0.8.17;
+pragma solidity 0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -23,6 +23,8 @@ contract PullOverPush is Ownable {
 
     Participant[] winners;  
     uint256 public pot;
+
+    constructor() Ownable(msg.sender) {}
 
     // Checks if there is room for a new participant and that it is not already in the list
     modifier newParticipant() {

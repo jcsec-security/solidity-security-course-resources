@@ -21,6 +21,8 @@ contract Example1 is Ownable {
 
 	Vault[N_VAULT] vaults;
 
+	constructor() Ownable(msg.sender) {}
+
     function checkCredit() external onlyOwner {
 		uint256 accumulator = 0;
 		for (uint256 i = 0; i < N_VAULT; i++) { 	

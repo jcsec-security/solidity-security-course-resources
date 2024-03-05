@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity 0.8.17;
+pragma solidity 0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -79,7 +79,7 @@ contract VotingContract is Ownable {
 
     /************************************** External *******************************************************/ 
 
-    constructor(uint256 commit, uint256 reveal) enforceWindowSize(commit, reveal) {      
+    constructor(uint256 commit, uint256 reveal) enforceWindowSize(commit, reveal) Ownable(msg.sender) {      
         commitWindow = commit;
         revealWindow = reveal;
     }
