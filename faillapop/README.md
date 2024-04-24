@@ -23,7 +23,7 @@ Try to perform a full mock audit! Create your own professional report mimicking 
 Solutions are not provided along this repo but the documentation has been created following the NatSpec format and the following diagram will help you get a grasp of the whole architecture.
 
 
-![Faillapop diagram](Faillapop_diagram.png)
+![Faillapop diagram](Faillapop_diagram_v2.png)
 
 
 > [!TIP]
