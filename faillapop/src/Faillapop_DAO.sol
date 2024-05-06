@@ -17,16 +17,22 @@ import {IERC20} from "@openzeppelin/contracts@v5.0.1/token/ERC20/IERC20.sol";
     @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/solidity-security-teaching-resources
 */
 contract FP_DAO is IFP_DAO, AccessControl {
-
-        /*************************************** Errors *******************************************************/
-    ///@notice Throwed if a zero address (0x0) is detected in an operation that does not permit it
-    error ZeroAddress();
     
-        /************************************** Constants *******************************************************/
+    /************************************** Constants *******************************************************/
     ///@notice The threshold for the random number generator
     uint256 public constant THRESHOLD = 10;
-    ///@notice The default number of voters for passing a vote
-    uint256 public constant DEFAULT_QUORUM = 100;
+    ///@notice The default number of voters for passing a dispute vote
+    uint256 public constant DEFAULT_DISPUTE_QUORUM = 100;
+    ///@notice The default number of voters for passing an update vote
+    uint256 public constant DEFAULT_PROPOSAL_QUORUM = 500;
+    ///@notice The time window in which a proposal can not be voted
+    uint256 public constant PROPOSAL_REVIEW_TIME = 1 days;
+    ///@notice The minimum voting period for a proposal
+    uint256 public constant PROPOSAL_VOTING_TIME = 3 days;
+    ///@notice The minimum waiting time between approval and execution of a proposal
+    uint256 public constant PROPOSAL_EXECUTION_DELAY = 1 days;
+    ///@notice The Control role ID for the AccessControl contract. At first it's the msg.sender and then the shop.
+    bytes32 public constant CONTROL_ROLE = keccak256("CONTROL_ROLE");
 
 
     /************************************** State vars and Structs *******************************************************/
@@ -47,6 +53,33 @@ contract FP_DAO is IFP_DAO, AccessControl {
         uint256 totalVoters;
     }
 
+    /** 
+        @notice An UpgradeProposal includes the address of the creator, the id, the creationTimestamp, the new contract address, 
+        the number of votes for and against the proposal, the total number of voters and the status of the proposal.
+        @dev newShop is the address of the new contract which can be checked on etherscan
+     */
+    struct UpgradeProposal {
+        address creator;
+        uint256 id;
+        uint256 creationTimestamp;
+        uint256 approvalTimestamp;
+        address newShop;
+        uint256 votesFor;
+        uint256 votesAgainst;
+        uint256 totalVoters;
+        ProposalState state;
+    }
+
+    /** 
+        @notice The ProposalState enum is used to record the state of a proposal
+        @dev NOT_ACTIVE is the default value, ACTIVE is the state of an existing proposal, PASSED is the state of a proposal that has been voted and passed but not yet executed
+     */
+    enum ProposalState {
+        NOT_ACTIVE,
+        ACTIVE,
+        PASSED
+    }
+
 
     /**
         @notice The Vote enum is used to record the vote of a user
@@ -57,9 +90,7 @@ contract FP_DAO is IFP_DAO, AccessControl {
         FOR,
         AGAINST
     }
-
-    ///@notice The Control role ID for the AccessControl contract. At first it's the msg.sender and then the shop.
-    bytes32 public constant CONTROL_ROLE = keccak256("CONTROL_ROLE");
+    
     ///@notice Bool to check if the shop address has been set
     bool private _shopSet = false;
     ///@notice Current disputes, indexed by disputeId
@@ -67,21 +98,39 @@ contract FP_DAO is IFP_DAO, AccessControl {
     ///@notice The ID of the next dispute to be created
     uint256 public nextDisputeId;
     ///@dev Mapping between user address and disputeId to record the vote.
-    mapping(address => mapping(uint256 => Vote)) public hasVoted;
+    mapping(address => mapping(uint256 => Vote)) public hasVotedInDispute;
     ///@dev Mapping between disputeId and the result of the dispute.
     mapping(uint256 => Vote) public disputeResult;
     ///@dev Mapping between user address and disputeId to record the lottery check.
     mapping(address => mapping(uint256 => bool)) public hasCheckedLottery;
+    ///@notice Min number of people to pass a dispute
+    uint256 public disputeQuorum;
+
+    ///@notice Current upgrade proposals, indexed by upgradeProposalId
+    mapping(uint256 => UpgradeProposal) public upgradeProposals;
+    ///@notice The ID of the next upgrade proposal to be created
+    uint256 public nextUpgradeProposalId;
+    ///@dev Mapping between user address and upgradeProposalId to record the vote
+    mapping(address => mapping(uint256 => Vote)) public hasVotedInUpgradeProposal;
+    ///@dev Mapping between upgradeProposalId and the result of the proposal.
+    mapping(uint256 => Vote) public upgradeProposalResult;
+    ///@notice Min number of people to pass a proposal
+    uint256 public proposalQuorum = DEFAULT_PROPOSAL_QUORUM; 
+
     ///@notice _password to access key features
     string private _password;
-    ///@notice The Shop contract
-    IFP_Shop public shopContract;
+    ///@notice The address of the Shop contract
+    address public shopAddress;
     ///@notice The CoolNFT contract
     IFP_CoolNFT public coolNFTContract;
     ///@notice The FPT token contract
     IERC20 public immutable fptContract;
-    ///@notice Min number of people to pass a proposal
-    uint256 public quorum;
+
+
+    /*************************************** Errors *******************************************************/
+
+    ///@notice Throwed if a zero address (0x0) is detected in an operation that does not permit it
+    error ZeroAddress();
 
 
     /************************************** Events and modifiers *****************************************************/
@@ -89,13 +138,26 @@ contract FP_DAO is IFP_DAO, AccessControl {
     ///@notice Emitted when the contract configuration is changed, contains the address of the Shop
     event NewConfig(address shop, address nft);
     ///@notice Emitted when a user votes, contains the disputeId and the user address
-    event VoteCasted(uint256 disputeId, address user);
+    event DisputeVoteCasted(uint256 disputeId, address user);
     ///@notice Emitted when a new dispute is created, contains the disputeId and the itemId
     event NewDispute(uint256 disputeId, uint256 itemId);
     ///@notice Emitted when a dispute is closed, contains the disputeId and the itemId
     event EndDispute(uint256 disputeId, uint256 itemId);
     ///@notice Emitted when a user is awarder a cool NFT, contains the user address
     event AwardNFT(address user);
+
+    ///@notice Emitted when a new upgrade proposal is created, contains the proposalId, the creationTimestamp and the new contract address
+    event NewUpgradeProposal(uint256 id, uint256 creationTimestamp, address newShop);
+    ///@notice Emitted when a user votes on an upgrade proposal, contains the proposalId and the user address
+    event ProposalVoteCasted(uint256 proposalId, address user);
+    ///@notice Emitted when an upgrade proposal is passed, contains the proposalId, the new contract address and the timestamp
+    event ProposalPassed(uint256 proposalId, address newShop, uint256 approvalTimestamp);
+    ///@notice Emitted when an upgrade proposal is not passed because not enough users voted in favor, contains the proposalId and the new contract address 
+    event ProposalNotPassed(uint256 proposalId, address newShop);
+    ///@notice Emitted when an upgrade proposal is executed, contains the proposalId and the new contract address
+    event ProposalExecuted(uint256 proposalId, address newShop);
+    ///@notice Emitted when an upgrade proposal is canceled, contains the proposalId
+    event ProposalCanceled(uint256 proposalId);
 
 
     /**
@@ -163,33 +225,12 @@ contract FP_DAO is IFP_DAO, AccessControl {
 
     /**
         @notice Sets the shop address as the new Control role
-        @param shopAddress  The address of the shop 
+        @param shop The address of the shop 
     */
-    function setShop(address shopAddress) external onlyRole(CONTROL_ROLE) shopNotSet {
+    function setShop(address shop) external onlyRole(CONTROL_ROLE) shopNotSet {
         _shopSet = true;
-        shopContract = IFP_Shop(shopAddress);
+        shopAddress = shop;
         _grantRole(CONTROL_ROLE, shopAddress);
-    }
-
-    /**
-        @notice Update the contract's configuration details
-        @param magicWord to authenticate as privileged user
-        @param newMagicWord The new password to access key features
-        @param newShop The new address of the Shop contract
-        @param newNft The new address of the NFT contract
-     */
-    function updateConfig(
-        string calldata magicWord, 
-        string calldata newMagicWord, 
-        address newShop,
-        address newNft
-    ) external isAuthorized(magicWord) notZero(newShop) notZero(newNft){ 
-        _password = newMagicWord;
-        
-        shopContract = IFP_Shop(newShop);
-        coolNFTContract = IFP_CoolNFT(newNft);
-        
-        emit NewConfig(newShop, newNft);
     }
 
     /**
@@ -197,23 +238,22 @@ contract FP_DAO is IFP_DAO, AccessControl {
         @param disputeId The ID of the target dispute
         @param vote The vote, true for FOR, false for AGAINST
      */
-    function castVote(uint256 disputeId, bool vote) external { 
-        require(hasVoted[msg.sender][disputeId] == Vote.DIDNT_VOTE , "You have already voted");
+    function castVoteOnDispute(uint256 disputeId, bool vote) external {
+        require(hasVotedInDispute[msg.sender][disputeId] == Vote.DIDNT_VOTE , "You have already voted");
         
         uint256 votingPower = _calcVotingPower(msg.sender);
         require(votingPower > 0, "You have no voting power");
 
         if (vote) {
             disputes[disputeId].votesFor += votingPower;
-            hasVoted[msg.sender][disputeId] = Vote.FOR;
+            hasVotedInDispute[msg.sender][disputeId] = Vote.FOR;
         } else {
             disputes[disputeId].votesAgainst += votingPower;
-            
         }      
 
         disputes[disputeId].totalVoters += 1;
 
-        emit VoteCasted(disputeId, msg.sender);
+        emit DisputeVoteCasted(disputeId, msg.sender);
     }
 
     /**
@@ -226,7 +266,7 @@ contract FP_DAO is IFP_DAO, AccessControl {
         uint256 itemId, 
         string calldata buyerReasoning, 
         string calldata sellerReasoning
-    ) external onlyRole(CONTROL_ROLE) returns (uint256) {     
+    ) external onlyRole(CONTROL_ROLE) returns (uint256) {   
         uint256 dId = nextDisputeId;
         nextDisputeId += 1;
 
@@ -248,7 +288,7 @@ contract FP_DAO is IFP_DAO, AccessControl {
         @param disputeId The ID of the target dispute
      */
     function endDispute(uint256 disputeId) external {  
-        if (disputes[disputeId].totalVoters < quorum) {
+        if (disputes[disputeId].totalVoters < disputeQuorum) {
             revert("Not enough voters");
         }
 
@@ -286,14 +326,131 @@ contract FP_DAO is IFP_DAO, AccessControl {
         @param disputeId The ID of the target dispute
      */
     function checkLottery(uint256 disputeId) external notChecked(msg.sender, disputeId) { 
-        require(hasVoted[msg.sender][disputeId] != Vote.DIDNT_VOTE, "User didn't vote");
+        require(hasVotedInDispute[msg.sender][disputeId] != Vote.DIDNT_VOTE, "User didn't vote");
         hasCheckedLottery[msg.sender][disputeId] = true;
-        if(disputeResult[disputeId] == hasVoted[msg.sender][disputeId]) {
+        if(disputeResult[disputeId] == hasVotedInDispute[msg.sender][disputeId]) {
             _lotteryNFT(msg.sender);
         } else {
             revert("User voted for the wrong side");
         }
-    }        
+    }     
+
+    /**
+        @notice Open an upgrade proposal
+        @param addrNewShop The address of the new Shop contract proposed
+     */
+    function newUpgradeProposal( 
+        address addrNewShop
+    ) external notZero(addrNewShop) returns (uint256) { 
+        require(addrNewShop.code.length > 0, "The new shop address is invalid");      
+        uint256 pId = nextUpgradeProposalId;
+        nextUpgradeProposalId += 1;
+
+        upgradeProposals[pId] = UpgradeProposal(
+            msg.sender,
+            pId,
+            block.timestamp,
+            0,
+            addrNewShop,
+            0,
+            0,
+            0,
+            ProposalState.ACTIVE
+        );  
+
+        emit NewUpgradeProposal(pId, block.timestamp, addrNewShop);
+        return pId;
+    } 
+
+    /**
+        @notice Cast a vote on an upgrade proposal
+        @param proposalId The ID of the upgrade proposal
+        @param vote The vote, true for FOR, false for AGAINST
+     */
+    function castVoteOnProposal(uint256 proposalId, bool vote) external { 
+        require(upgradeProposals[proposalId].state == ProposalState.ACTIVE , "Proposal is not active");
+        require(upgradeProposals[proposalId].creationTimestamp + PROPOSAL_REVIEW_TIME < block.timestamp, "Proposal is not ready to be voted");
+        
+        require(hasVotedInUpgradeProposal[msg.sender][proposalId] == Vote.DIDNT_VOTE , "You have already voted");
+        
+        uint256 votingPower = _calcVotingPower(msg.sender);
+        require(votingPower > 0, "You have no voting power");
+
+        if (vote) {
+            upgradeProposals[proposalId].votesFor += votingPower;
+            hasVotedInUpgradeProposal[msg.sender][proposalId] = Vote.FOR;
+        } else {
+            upgradeProposals[proposalId].votesAgainst += votingPower;
+            hasVotedInUpgradeProposal[msg.sender][proposalId] = Vote.AGAINST; 
+        }      
+
+        upgradeProposals[proposalId].totalVoters += 1;
+
+        emit ProposalVoteCasted(proposalId, msg.sender);
+    }
+
+    /**
+        @notice Cancel an ongoing upgrade proposal by the proposal creator
+        @param proposalId The ID of the upgrade proposal
+     */
+    function cancelProposalByCreator(uint256 proposalId) external {  
+        require(upgradeProposals[proposalId].state == ProposalState.ACTIVE, "Proposal is not active");
+        require(upgradeProposals[proposalId].creator == msg.sender, "You are not the creator of the proposal");
+        _cancelProposal(proposalId);
+    }  
+
+    /**
+        @notice Cancel an ongoing upgrade proposal by the admin of the DAO (who knows the password)
+        @param proposalId The ID of the upgrade proposal
+        @param magicWord The password to access key features
+     */
+    function cancelProposal(uint256 proposalId, string calldata magicWord) external isAuthorized(magicWord) {
+        require(upgradeProposals[proposalId].state == ProposalState.ACTIVE, "Proposal is not active");
+        _cancelProposal(proposalId);
+    }    
+
+    /**
+        @notice Resolve a proposal if enough users have voted and enough time has passed
+        @param proposalId The ID of the upgrade proposal
+     */
+    function resolveUpgradeProposal(uint256 proposalId) external { 
+        require(upgradeProposals[proposalId].state == ProposalState.ACTIVE, "Proposal is not active"); 
+        require(upgradeProposals[proposalId].creationTimestamp + PROPOSAL_VOTING_TIME < block.timestamp, "Proposal is not ready to be resolved");
+        require(upgradeProposals[proposalId].totalVoters > proposalQuorum, "Not enough voters"); 
+        address newShop = upgradeProposals[proposalId].newShop;
+        if (upgradeProposals[proposalId].votesFor > upgradeProposals[proposalId].votesAgainst) {
+            upgradeProposalResult[proposalId] = Vote.FOR;
+            upgradeProposals[proposalId].state = ProposalState.PASSED;
+            upgradeProposals[proposalId].approvalTimestamp = block.timestamp;
+            emit ProposalPassed(proposalId, newShop, block.timestamp);
+        } else {
+            delete upgradeProposals[proposalId];
+            upgradeProposalResult[proposalId] = Vote.AGAINST;
+            emit ProposalNotPassed(proposalId, newShop);
+        }
+    }  
+
+    /**
+        @notice Execute a passed proposal
+        @param proposalId The ID of the upgrade proposal
+     */
+    function executePassedProposal(uint256 proposalId) external { 
+        require(upgradeProposals[proposalId].state == ProposalState.PASSED, "Proposal is not passed");    
+        require(upgradeProposals[proposalId].approvalTimestamp + PROPOSAL_EXECUTION_DELAY < block.timestamp, "Proposal is not ready to be executed");
+        address newShop = upgradeProposals[proposalId].newShop;    
+        delete upgradeProposals[proposalId];
+
+        (bool success, ) = shopAddress.call(
+            abi.encodeWithSignature(
+                "upgradeToAndCall(address,bytes)",
+                newShop,
+                "" 
+            )
+        );
+
+        require(success, "upgradeToAndCall(address,bytes) call failed");
+        emit ProposalExecuted(proposalId, newShop);
+    }
 
     /************************************** Views *********************************************************************/
 
@@ -303,7 +460,7 @@ contract FP_DAO is IFP_DAO, AccessControl {
      */
 	function queryDispute(uint256 disputeId) public view returns (Dispute memory) {
 		return disputes[disputeId];
-	} 
+	}  
 
     /**
         @notice Query the result of a dispute
@@ -311,6 +468,22 @@ contract FP_DAO is IFP_DAO, AccessControl {
      */
 	function queryDisputeResult(uint256 disputeId) public view returns (Vote) {
 		return disputeResult[disputeId];
+	}  
+
+    /**
+        @notice Query the details of an upgrade proposal
+        @param upgradeProposalId The ID of the target proposal
+     */
+	function queryUpgradeProposal(uint256 upgradeProposalId) public view returns (UpgradeProposal memory) {
+		return upgradeProposals[upgradeProposalId];
+	}
+
+    /**
+        @notice Query the result of an upgrade proposal
+        @param upgradeProposalId The ID of the target proposal
+     */
+	function queryUpgradeProposalResult(uint256 upgradeProposalId) public view returns (Vote) {
+		return upgradeProposalResult[upgradeProposalId];
 	}  
 
     /************************************** Internal *****************************************************************/
@@ -330,10 +503,11 @@ contract FP_DAO is IFP_DAO, AccessControl {
         ))));
 
         if (randomNumber < THRESHOLD) {
-            coolNFTContract.mintCoolNFT(user);            
+            coolNFTContract.mintCoolNFT(user);
+            
         }
 
-        emit AwardNFT(user);  
+        emit AwardNFT(user);
     }
 
     /**
@@ -341,7 +515,13 @@ contract FP_DAO is IFP_DAO, AccessControl {
         @param itemId The ID of the item involved in the dispute
      */
     function _buyerWins(uint256 itemId) internal {
-        shopContract.returnItem(itemId);
+        (bool success, ) = shopAddress.call(
+            abi.encodeWithSignature(
+                "returnItem(uint256)",
+                itemId
+            )
+        );
+        require(success, "returnItem(uint256) call failed");
     }
 
     /**
@@ -349,7 +529,13 @@ contract FP_DAO is IFP_DAO, AccessControl {
         @param itemId The ID of the item involved in the dispute
      */
     function _sellerWins(uint256 itemId) internal {
-        shopContract.endDispute(itemId);
+        (bool success, ) = shopAddress.call(
+            abi.encodeWithSignature(
+                "endDispute(uint256)",
+                itemId
+            )
+        );
+        require(success, "endDispute(uint256) call failed");
     }
 
     /**
@@ -359,5 +545,14 @@ contract FP_DAO is IFP_DAO, AccessControl {
         return fptContract.balanceOf(user);
     } 
 
+    /**
+        @notice Cancel an ongoing upgrade proposal. Either by the sender of the proposal or the admin (who knows the password)
+        @param proposalId The ID of the upgrade proposal
+     */
+    function _cancelProposal(uint proposalId) internal {                 
+        delete upgradeProposals[proposalId];
+
+        emit ProposalCanceled(proposalId);
+    } 
 
 }

@@ -36,8 +36,6 @@ contract FP_Vault is IFP_Vault, AccessControl {
     mapping (address => uint256) public lockedFunds;
     ///@notice address of the NFT contract
     address public immutable powersellerContract;
-    ///@notice Shop contract
-    IFP_Shop public shopContract;
     ///@notice DAO contract
     IFP_DAO public immutable daoContract;
     ///@notice Maximum claimable amount
@@ -81,7 +79,7 @@ contract FP_Vault is IFP_Vault, AccessControl {
 
             let res := sub(sub(userStake, userLocked), amount)
 
-            if lt(res, 1) {
+            if lt(res, 1) { 
                 mstore(0x00, "Not enough funds!")
                 revert(0x00, 0x20)
             }
@@ -116,11 +114,10 @@ contract FP_Vault is IFP_Vault, AccessControl {
 
     /**
         @notice Sets the shop address as the new Control role
-        @param shopAddress  The address of the shop contract
+        @param shopAddress The address of the shop contract
     */
     function setShop(address shopAddress) external onlyRole(CONTROL_ROLE) shopNotSet {
         _shopSet = true;
-        shopContract = IFP_Shop(shopAddress);
         _grantRole(CONTROL_ROLE, shopAddress);
     }
 
@@ -212,7 +209,6 @@ contract FP_Vault is IFP_Vault, AccessControl {
         emit RewardsClaimed(msg.sender, amount);
 	}
 
-
     /************************************** Views  *******************************************************/
 
     ///@notice Get the balance of the vault
@@ -232,13 +228,12 @@ contract FP_Vault is IFP_Vault, AccessControl {
     ///@param user The address of the user to query
 	function userLockedBalance (address user) public view returns (uint256) {
 		return lockedFunds[user];
-	} 
-
+	}    
 
     /************************************** Internal *****************************************************************/
 
     ///@notice Sets a new maximum claimable amount per user based on the total slashed amount
-    function _distributeSlashing(uint256 amount) internal {
+    function _distributeSlashing(uint256 amount) internal { 
         totalSlashed += amount;
 
         (bool success, bytes memory data) = powersellerContract.call(
@@ -246,12 +241,12 @@ contract FP_Vault is IFP_Vault, AccessControl {
                 "totalPowersellers()"
             )
         ); 
-        require(success, "totalPowersellers() call failed");        
+        require(success, "totalPowersellers() call failed");
         uint256 totalPowersellers = abi.decode(data, (uint256));
         if(totalPowersellers > 0) {
             _updateMaxClaimableAmount(totalPowersellers);
         }
-    }    
+    }
 
     ///@notice Updates the maximum claimable amount based on the total slashed amount and the total powersellers
     ///@param totalPowersellers The total amount of powersellers
@@ -259,4 +254,5 @@ contract FP_Vault is IFP_Vault, AccessControl {
         uint256 newMax = totalSlashed / totalPowersellers;
         maxClaimableAmount = newMax;
     }
+
 }

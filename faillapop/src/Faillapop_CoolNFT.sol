@@ -89,28 +89,28 @@ contract FP_CoolNFT is IFP_CoolNFT, ERC721, AccessControl {
     /**
      * @notice Cool NFTs cannot be transferred, so this function is overriden to revert
      */
-    function approve(address to, uint256 tokenId) public virtual override{
+    function approve(address /*to*/, uint256 /*tokenId*/) public virtual override{
         revert("CoolNFT cannot be approved");
     }
 
     /**
      * @notice Cool NFTs cannot be transferred, so this function is overriden to revert
      */
-    function setApprovalForAll(address operator, bool approved) public virtual override{
+    function setApprovalForAll(address /*operator*/, bool /*approved*/) public virtual override{
         revert("CoolNFT cannot be approved");
     }
 
     /**
      * @notice Cool NFTs cannot be transferred, so this function is overriden to revert
      */
-    function transferFrom(address from, address to, uint256 tokenId) public virtual override{
+    function transferFrom(address /*from*/, address /*to*/, uint256 /*tokenId*/) public virtual override{
         revert("CoolNFT cannot be transferred");
     }
 
     /**
      * @notice Cool NFTs cannot be transferred, so this function is overriden to revert
      */
-    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public virtual override{
+    function safeTransferFrom(address /*from*/, address /*to*/, uint256 /*tokenId*/, bytes memory /*data*/) public virtual override{
         revert("CoolNFT cannot be transferred");
     }
 

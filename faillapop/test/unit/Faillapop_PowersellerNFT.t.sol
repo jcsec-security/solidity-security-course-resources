@@ -8,6 +8,8 @@ import {FP_PowersellerNFT} from "../../src/Faillapop_PowersellerNFT.sol";
 import {FP_Shop} from "../../src/Faillapop_shop.sol";
 import {FP_Token} from "../../src/Faillapop_ERC20.sol";
 import {FP_Vault} from "../../src/Faillapop_vault.sol";
+import {FP_Proxy} from "../../src/Faillapop_Proxy.sol";
+import {DeployFaillapop} from "../../script/DeployFaillapop.s.sol";
 
 contract Faillapop_Powerseller_Test is Test {
     
@@ -17,6 +19,7 @@ contract Faillapop_Powerseller_Test is Test {
     FP_Vault public vault;   
     FP_Shop public shop;
     FP_Token public token;
+    FP_Proxy public proxy;
 
     address public constant USER1 = address(0x1);
     address public constant USER2 = address(0x2);
@@ -24,7 +27,7 @@ contract Faillapop_Powerseller_Test is Test {
     /************************************** Modifiers **************************************/
 
     modifier mint() {
-        vm.prank(address(shop));
+        vm.prank(address(proxy));
         powersellerNFT.safeMint(USER1);
         _;
     }
@@ -34,17 +37,8 @@ contract Faillapop_Powerseller_Test is Test {
     function setUp() external {
         vm.deal(USER1, 10);
 
-        token = new FP_Token();
-        coolNFT = new FP_CoolNFT();
-        powersellerNFT = new FP_PowersellerNFT();
-        dao = new FP_DAO("password", address(coolNFT), address(token));
-        vault = new FP_Vault(address(powersellerNFT), address(dao));
-        shop = new FP_Shop(address(dao), address(vault), address(powersellerNFT));
-
-        vault.setShop(address(shop));
-        dao.setShop(address(shop));
-        powersellerNFT.setShop(address(shop));
-        coolNFT.setDAO(address(dao));
+        DeployFaillapop deploy = new DeployFaillapop();
+        (shop, token, coolNFT, powersellerNFT, dao, vault, proxy) = deploy.run();
     }
 
     /************************************** Tests **************************************/
@@ -55,13 +49,13 @@ contract Faillapop_Powerseller_Test is Test {
     }    
 
     function test_setShop() public {
-        assertTrue(powersellerNFT.hasRole(bytes32(powersellerNFT.CONTROL_ROLE()), address(shop)));
+        assertTrue(powersellerNFT.hasRole(bytes32(powersellerNFT.CONTROL_ROLE()), address(proxy)));
     }
 
     function test_setShop_x2() public {
-        vm.prank(address(shop));
+        vm.prank(address(proxy));
         vm.expectRevert(bytes("Shop address already set"));
-        powersellerNFT.setShop(address(shop));        
+        powersellerNFT.setShop(address(proxy));        
     }
 
     function test_safeMint() public mint() {
@@ -79,14 +73,14 @@ contract Faillapop_Powerseller_Test is Test {
     }
 
     function test_safeMint_RevertIf_UserIsAlreadyPowerseller() public mint() {
-        vm.prank(address(shop));
+        vm.prank(address(proxy));
         vm.expectRevert(bytes("This user is already a Powerseller"));
         powersellerNFT.safeMint(USER1);
     }
     
     function test_removePowersellerNFT() public mint() {
         uint256 previousTotalPowersellers = powersellerNFT.totalPowersellers();
-        vm.prank(address(shop));
+        vm.prank(address(proxy));
         powersellerNFT.removePowersellerNFT(USER1);
         
         assertEq(powersellerNFT.balanceOf(USER1), 0, "Incorrect balance");
@@ -96,7 +90,7 @@ contract Faillapop_Powerseller_Test is Test {
     }
 
     function test_removePowersellerNFT_RevertIf_UserIsNotPowerseller() public {
-        vm.prank(address(shop));
+        vm.prank(address(proxy));
         vm.expectRevert(bytes("This user is not a Powerseller"));
         powersellerNFT.removePowersellerNFT(USER1);
     }

@@ -13,6 +13,14 @@ pragma solidity ^0.8.13;
 */
 interface IFP_Shop {
     /**
+        @notice Initializer of the contract
+        @param daoAddress The address of the DAO contract
+        @param vaultAddress The address of the Vault contract
+        @param powersellerNFT The address of the PowersellerNFT contract
+     */
+    function initialize(address daoAddress, address vaultAddress, address powersellerNFT) external;
+    
+    /**
         @notice Endpoint to buy an item
         @param itemId The ID of the item being bought
         @dev The user must send the exact amount of Ether to buy the item
