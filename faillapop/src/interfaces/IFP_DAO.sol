@@ -11,31 +11,18 @@ pragma solidity ^0.8.13;
 */
 interface IFP_DAO {
 
-     /**
-        @notice Sets the shop address as the new Control role
-        @param shopAddress The address of the shop 
-    */
-    function setShop(address shopAddress) external;
-
     /**
-        @notice Update the contract's configuration details
-        @param magicWord to authenticate as privileged user
-        @param newMagicWord The new password to access key features
-        @param newShop The new address of the Shop contract
-        @param newNft The new address of the NFT contract
-     */
-    function updateConfig(
-        string calldata magicWord, 
-        string calldata newMagicWord, 
-        address newShop,
-        address newNft
-    ) external;
+        @notice Sets the shop address as the new Control role
+        @param shop The address of the shop 
+    */
+    function setShop(address shop) external;
 
     /**
         @notice Cast a vote on a dispute
         @param disputeId The ID of the target dispute
+        @param vote The vote, true for FOR, false for AGAINST
      */
-    function castVote(uint256 disputeId, bool vote) external;
+    function castVoteOnDispute(uint256 disputeId, bool vote) external;
 
     /**
         @notice Open a dispute
@@ -68,4 +55,43 @@ interface IFP_DAO {
         @param disputeID The ID of the target dispute
      */
     function checkLottery(uint256 disputeID) external;
+
+    /**
+        @notice Open an upgrade proposal
+        @param addrNewShop The address of the new Shop contract proposed
+     */
+    function newUpgradeProposal(address addrNewShop) external returns (uint);
+
+    /**
+        @notice Cast a vote on an upgrade proposal
+        @param proposalId The ID of the upgrade proposal
+        @param vote The vote, true for FOR, false for AGAINST
+     */
+    function castVoteOnProposal(uint proposalId, bool vote) external;
+
+    /**
+        @notice Cancel an ongoing upgrade proposal by the proposal creator
+        @param proposalId The ID of the upgrade proposal
+     */
+    function cancelProposalByCreator(uint proposalId) external;
+
+    /**
+        @notice Cancel an ongoing upgrade proposal by the admin of the DAO (who knows the password)
+        @param proposalId The ID of the upgrade proposal
+        @param magicWord The password to access key features
+     */
+    function cancelProposal(uint proposalId, string calldata magicWord) external;
+
+    /**
+        @notice Resolve a proposal if enough users have voted and enough time has passed
+        @param proposalId The ID of the upgrade proposal
+     */
+    function resolveUpgradeProposal(uint256 proposalId) external;
+
+    /**
+        @notice Execute a passed proposal
+        @param proposalId The ID of the upgrade proposal
+     */
+    function executePassedProposal(uint256 proposalId) external;
+
 }

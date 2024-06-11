@@ -5,7 +5,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {FP_Token} from "../../src/Faillapop_ERC20.sol";
 
 contract Faillapop_ERC20_Test is Test {
-
+    
     FP_Token public token;
     address public constant ADMIN = address(0x1);
     address public constant USER = address(0x2);

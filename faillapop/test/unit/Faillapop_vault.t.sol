@@ -8,6 +8,8 @@ import {FP_PowersellerNFT} from "../../src/Faillapop_PowersellerNFT.sol";
 import {FP_Shop} from "../../src/Faillapop_shop.sol";
 import {FP_Token} from "../../src/Faillapop_ERC20.sol";
 import {FP_Vault} from "../../src/Faillapop_vault.sol";
+import {FP_Proxy} from "../../src/Faillapop_Proxy.sol";
+import {DeployFaillapop} from "../../script/DeployFaillapop.s.sol";
 
 contract Faillapop_vault_Test is Test {
 
@@ -17,6 +19,7 @@ contract Faillapop_vault_Test is Test {
     FP_Token public token;
     FP_CoolNFT public coolNFT;
     FP_PowersellerNFT public powersellerNFT;
+    FP_Proxy public proxy;
 
     address public constant SELLER1 = address(1);
     address public constant SELLER2 = address(2);
@@ -32,7 +35,7 @@ contract Faillapop_vault_Test is Test {
     }
 
     modifier doLock(address user, uint256 amount) {
-        vm.prank(address(shop));
+        vm.prank(address(proxy));
         vault.doLock(user, amount);
         _;
     }
@@ -45,30 +48,20 @@ contract Faillapop_vault_Test is Test {
         vm.deal(SELLER2, 15 ether);
         vm.deal(BUYER1, 15 ether);
 
-        token = new FP_Token();
-        coolNFT = new FP_CoolNFT();
-        powersellerNFT = new FP_PowersellerNFT();
-        dao = new FP_DAO("password", address(coolNFT), address(token));
-        vault = new FP_Vault(address(powersellerNFT), address(dao));
-        shop = new FP_Shop(address(dao), address(vault), address(powersellerNFT));
-       
-        vault.setShop(address(shop));
-        dao.setShop(address(shop));
-        powersellerNFT.setShop(address(shop));
-        coolNFT.setDAO(address(dao));
+        DeployFaillapop deploy = new DeployFaillapop();
+        (shop, token, coolNFT, powersellerNFT, dao, vault, proxy) = deploy.run();
     }
 
-    /************************************** Tests **************************************/  
+    /************************************** Tests **************************************/ 
 
     function test_setShop() public {
-        assertTrue(vault.hasRole(keccak256("CONTROL_ROLE"), address(shop)));
-        assertEq(address(vault.shopContract()), address(shop));
-    }  
+        assertTrue(vault.hasRole(keccak256("CONTROL_ROLE"), address(proxy)));
+    }
 
     function test_setShop_x2() public {
-        vm.prank(address(shop));
+        vm.prank(address(proxy));
         vm.expectRevert("Shop address already set");
-        vault.setShop(address(shop));
+        vault.setShop(address(proxy));
     }
 
     function test_doStake() public {
@@ -120,7 +113,7 @@ contract Faillapop_vault_Test is Test {
         uint256 userLockedBefore = vault.userLockedBalance(USER1);
         uint256 vaultBalanceBefore = vault.vaultBalance();
 
-        vm.prank(address(shop));
+        vm.prank(address(proxy));
         vault.doLock(USER1, 1 ether);
 
         assertEq(vault.userBalance(USER1), userStakeBefore);
@@ -135,13 +128,13 @@ contract Faillapop_vault_Test is Test {
     }
 
     function test_doLock_RevertIf_AmountIsZero() public doStake(USER1, 2 ether) {
-        vm.prank(address(shop));
+        vm.prank(address(proxy));
         vm.expectRevert("Amount cannot be zero");
         vault.doLock(USER1, 0 ether);
     }
 
-    function test_doLock_RevertIf_AmountIsGreaterThanStake() public doStake(USER1, 2 ether) { 
-        vm.prank(address(shop));
+    function test_doLock_RevertIf_AmountIsGreaterThanStake() public doStake(USER1, 2 ether) {
+        vm.prank(address(proxy));
         vm.expectRevert();
         vault.doLock(USER1, 3 ether);
     }
@@ -151,7 +144,7 @@ contract Faillapop_vault_Test is Test {
         uint256 userLockedBefore = vault.userLockedBalance(USER1);
         uint256 vaultBalanceBefore = vault.vaultBalance();
 
-        vm.prank(address(shop));
+        vm.prank(address(proxy));
         vault.doUnlock(USER1, 1 ether);
 
         assertEq(vault.userBalance(USER1), userStakeBefore);
@@ -166,13 +159,13 @@ contract Faillapop_vault_Test is Test {
     }
 
     function test_doUnlock_RevertIf_AmountIsZero() public doStake(USER1, 2 ether) doLock(USER1, 1 ether) {
-        vm.prank(address(shop));
+        vm.prank(address(proxy));
         vm.expectRevert("Amount cannot be zero");
         vault.doUnlock(USER1, 0 ether);
     }
 
     function test_doUnlock_RevertIf_AmountIsGreaterThanLocked() public doStake(USER1, 2 ether) doLock(USER1, 1 ether) {
-        vm.prank(address(shop));
+        vm.prank(address(proxy));
         vm.expectRevert("Not enough locked funds");
         vault.doUnlock(USER1, 3 ether);
     }
@@ -182,7 +175,7 @@ contract Faillapop_vault_Test is Test {
         uint256 userStakeBefore = vault.userBalance(USER1);
         uint256 vaultBalanceBefore = vault.vaultBalance();
 
-        vm.prank(address(shop));
+        vm.prank(address(proxy));
         vault.doSlash(USER1);
 
         assertEq(vault.userBalance(USER1), 0);
@@ -197,7 +190,8 @@ contract Faillapop_vault_Test is Test {
         vault.doSlash(USER1);
     } 
 
-    function test_claimRewards() public { 
+    
+    function test_claimRewards() public {
         // Create a powerseller
         //Lets recreate 10 valid sales
         vm.prank(SELLER1);
@@ -209,18 +203,50 @@ contract Faillapop_vault_Test is Test {
             uint256 price = 0.5 ether;  
               
             vm.prank(SELLER1);
-            shop.newSale(title, description, price);
+            (bool success, ) = address(proxy).call(
+                abi.encodeWithSignature(
+                    "newSale(string,string,uint256)",
+                    title, 
+                    description, 
+                    price
+                )
+            );
+            require(success, "Sale not created");
             
-            uint256 saleId = shop.offerIndex() - 1;
+            (bool success2, bytes memory data) = address(proxy).call(
+                abi.encodeWithSignature(
+                    "offerIndex()" 
+                )
+            );
+            require(success2, "Offer index not retrieved");
+            uint256 saleId = abi.decode(data, (uint256)) - 1;
+
             vm.startPrank(BUYER1);
-            shop.doBuy{value: 0.5 ether}(saleId);
-            shop.itemReceived(saleId);
+            (bool success3, ) = address(proxy).call{value: 0.5 ether}(
+                abi.encodeWithSignature(
+                    "doBuy(uint256)",
+                    saleId
+                )
+            );
+            require(success3, "Sale not bought");
+            (bool success4, ) = address(proxy).call(
+                abi.encodeWithSignature(
+                    "itemReceived(uint256)",
+                    saleId
+                )
+            );
+            require(success4, "Item not received");
             vm.stopPrank();
         }
 
         vm.prank(SELLER1);
         vm.warp(block.timestamp + 6 weeks);
-        shop.claimPowersellerBadge();
+        (bool success5, ) = address(proxy).call(
+            abi.encodeWithSignature(
+                "claimPowersellerBadge()"
+            )
+        );
+        require(success5, "Powerseller badge not claimed");
 
         assertEq(powersellerNFT.balanceOf(SELLER1), 1, "Seller should not have the badge yet");
         assertTrue(powersellerNFT.checkPrivilege(SELLER1), "Powerseller badge not minted correctly");
@@ -229,11 +255,31 @@ contract Faillapop_vault_Test is Test {
         vm.prank(SELLER2);
         vault.doStake{value: 10 ether}();
         vm.prank(SELLER2);
-        shop.newSale("Sale", "This is a malicious sale", 0.5 ether);
+        (bool success6, ) = address(proxy).call(
+            abi.encodeWithSignature(
+                "newSale(string,string,uint256)",
+                "Sale", 
+                "This is a malicious sale", 
+                0.5 ether
+            )
+        );
+        require(success6, "Malicious sale not created");
 
         // Remove malicious sale
-        uint256 maliciousSaleId = shop.offerIndex() - 1; 
-        shop.removeMaliciousSale(maliciousSaleId);
+        (bool success7, bytes memory data2) = address(proxy).call(
+                abi.encodeWithSignature(
+                    "offerIndex()" 
+                )
+            );
+            require(success7, "Offer index not retrieved");
+            uint256 maliciousSaleId = abi.decode(data2, (uint256)) - 1;
+        (bool success8, ) = address(proxy).call(
+            abi.encodeWithSignature(
+                "removeMaliciousSale(uint256)",
+                maliciousSaleId
+            )
+        );
+        require(success8, "Malicious sale not removed");
 
         vm.prank(SELLER1);
         vault.claimRewards();
@@ -241,4 +287,5 @@ contract Faillapop_vault_Test is Test {
         assertEq(vault.rewardsClaimed(SELLER1), vault.maxClaimableAmount(), "Seller should have claimed the max amount");   
 
     }
+
 }

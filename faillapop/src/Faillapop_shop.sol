@@ -4,7 +4,8 @@ pragma solidity ^0.8.13;
 import {IFP_DAO} from "./interfaces/IFP_DAO.sol";
 import {IFP_Shop} from "./interfaces/IFP_Shop.sol";
 import {IFP_Vault} from "./interfaces/IFP_Vault.sol";
-import {AccessControl} from "@openzeppelin/contracts@v5.0.1/access/AccessControl.sol";
+import {AccessControlUpgradeable} from "@openzeppelin-upgradeable/contracts@v5.0.1/access/AccessControlUpgradeable.sol";
+import {Initializable} from "@openzeppelin-upgradeable/contracts@v5.0.1/proxy/utils/Initializable.sol";
 
 /** 
     @title The FaillaPop Shop! [v.02]
@@ -14,7 +15,7 @@ import {AccessControl} from "@openzeppelin/contracts@v5.0.1/access/AccessControl
     @dev Security review is pending... should we deploy this?
     @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/solidity-security-teaching-resources
 */
-contract FP_Shop is IFP_Shop, AccessControl {
+contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
 
     /************************************** Enum and structs *******************************************************/
 
@@ -64,21 +65,21 @@ contract FP_Shop is IFP_Shop, AccessControl {
         uint256 disputeId;
         string buyerReasoning;
         string sellerReasoning;
-    } 
+    }  
 
     /************************************** Constants *******************************************************/
+
     ///@notice The admin role ID for the AccessControl contract
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     ///@notice The DAO role ID for the AccessControl contract
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
     ///@notice The blacklisted role ID for the AccessControl contract
     bytes32 public constant BLACKLISTED_ROLE = keccak256("BLACKLISTED_ROLE");
-    ///@notice The default number of voters for passing a vote
-    uint256 public constant MAX_PENDING_TIME = 30 days;
-
+    ///@notice The maximum time a sale can be pending
+    uint256 public MAX_PENDING_TIME = 30 days;
 
     /************************************** State vars *******************************************************/
-    
+
     ///@notice Mapping between the item ID and its Sale struct
     mapping (uint256 => Sale) public offeredItems;
     ///@notice The index of the next new Sale
@@ -92,15 +93,15 @@ contract FP_Shop is IFP_Shop, AccessControl {
     ///@notice The list of blacklisted seller addresses
     address[] public blacklistedSellers;
     ///@notice address of the PowersellerNFT contract
-    address public immutable powersellerContract;
+    address public powersellerContract;
     ///@notice Faillapop vault contract
-    IFP_Vault public immutable vaultContract;
+    IFP_Vault public vaultContract;
     ///@notice Faillapop DAO contract
-    IFP_DAO public immutable daoContract;
+    IFP_DAO public daoContract;
 
 
     /************************************** Events and modifiers *****************************************************/
-
+    
     ///@notice Emitted when a user buys an item, contains the user address and the item ID
     event Buy(address user, uint256 item);
     ///@notice Emitted when a user creates a new sale, contains the item ID and the title of the item
@@ -129,12 +130,13 @@ contract FP_Shop is IFP_Shop, AccessControl {
     /************************************** External  ****************************************************************/ 
 
     /**
-        @notice Constructor of the contract
+        @notice Initializer of the contract
         @param daoAddress The address of the DAO contract
         @param vaultAddress The address of the Vault contract
         @param powersellerNFT The address of the PowersellerNFT contract
      */
-    constructor(address daoAddress, address vaultAddress, address powersellerNFT) {
+    function initialize(address daoAddress, address vaultAddress, address powersellerNFT) public initializer { 
+        AccessControlUpgradeable.__AccessControl_init();
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(DAO_ROLE, daoAddress);
 
@@ -157,7 +159,7 @@ contract FP_Shop is IFP_Shop, AccessControl {
             !hasRole(BLACKLISTED_ROLE, offeredItems[itemId].seller),
             "Seller is blacklisted"
         );
-
+        
         offeredItems[itemId].buyer = msg.sender;
         offeredItems[itemId].state = State.Pending;
         offeredItems[itemId].buyTimestamp = block.timestamp;
@@ -172,7 +174,7 @@ contract FP_Shop is IFP_Shop, AccessControl {
         @param buyerReasoning The reasoning of the buyer for the claim
      */
     function disputeSale(uint256 itemId, string calldata buyerReasoning) external {   
-        require(offeredItems[itemId].state == State.Pending, "Item not pending");
+        require(offeredItems[itemId].state == State.Pending, "Item not pending"); 
         require(offeredItems[itemId].buyer == msg.sender, "Not the buyer");   
 
         offeredItems[itemId].state = State.Disputed;
@@ -187,8 +189,8 @@ contract FP_Shop is IFP_Shop, AccessControl {
         @notice Endpoint to confirm the receipt of an item and trigger the payment to the seller. 
         @param itemId The ID of the item being confirmed
      */
-    function itemReceived(uint256 itemId) external { 
-        if(offeredItems[itemId].seller == msg.sender){
+    function itemReceived(uint256 itemId) external {
+        if(offeredItems[itemId].seller == msg.sender) {
             require( (block.timestamp - offeredItems[itemId].buyTimestamp) >= MAX_PENDING_TIME, "Insufficient elapsed time" );
         }else{
             require(offeredItems[itemId].buyer == msg.sender, "Not the buyer");
@@ -197,7 +199,7 @@ contract FP_Shop is IFP_Shop, AccessControl {
 
         // Seller should be paid
         closeSale(itemId, false, true, true);
-    }    
+    }
 
 
     /**
@@ -216,7 +218,7 @@ contract FP_Shop is IFP_Shop, AccessControl {
             _checkRole(DAO_ROLE); // Will revert if msg.sender is doesn't have the DAO_ROLE
             delete disputedItems[itemId];
         }
-
+          
         offeredItems[itemId].state = State.Sold;
 
         // Seller should be paid
@@ -230,7 +232,7 @@ contract FP_Shop is IFP_Shop, AccessControl {
         @param description A description of the item being sold
         @param price The price in Ether of the item being sold
      */
-    function newSale(string calldata title, string calldata description, uint256 price) external notBlacklisted() {
+    function newSale(string calldata title, string calldata description, uint256 price) external notBlacklisted {
         require(price > 0, "Price must be greater than 0");
         require(bytes(title).length > 0, "Title cannot be empty");
         require(bytes(description).length > 0, "Description cannot be empty");
@@ -259,7 +261,7 @@ contract FP_Shop is IFP_Shop, AccessControl {
         require(newPrice > 0, "Price must be greater than 0");
         require(bytes(newTitle).length > 0, "Title cannot be empty");
         require(bytes(newDesc).length > 0, "Description cannot be empty");
-        require(offeredItems[itemId].seller == msg.sender, "Only the seller can modify the sale"); 
+        require(offeredItems[itemId].seller == msg.sender, "Only the seller can modify the sale");   	
         
         // Update vault
         uint256 priceDifference;
@@ -272,8 +274,8 @@ contract FP_Shop is IFP_Shop, AccessControl {
         }
 
         // Update details
-        offeredItems[itemId].title = newTitle;
-        offeredItems[itemId].description = newDesc;
+        offeredItems[itemId].title = newTitle;         
+        offeredItems[itemId].description = newDesc;    
         offeredItems[itemId].price = newPrice;
 
         emit ModifyItem(itemId, newTitle);
@@ -284,9 +286,9 @@ contract FP_Shop is IFP_Shop, AccessControl {
         @notice Endpoint to cancel an active sale
         @param itemId The ID of the item which sale is being cancelled
     */
-    function cancelActiveSale (uint256 itemId) external {   
-        require(offeredItems[itemId].state == State.Selling, "Sale can't be cancelled");   
-        require(offeredItems[itemId].seller == msg.sender, "Only the seller can cancel the sale");   
+    function cancelActiveSale (uint256 itemId) external {    
+        require(offeredItems[itemId].state == State.Selling, "Sale can't be cancelled");     
+        require(offeredItems[itemId].seller == msg.sender, "Only the seller can cancel the sale");
         
         //Seller should NOT be paid
         closeSale(itemId, false, false, true);
@@ -319,13 +321,12 @@ contract FP_Shop is IFP_Shop, AccessControl {
         @param itemId The ID of the item being disputed
         @param sellerReasoning The reasoning of the seller for the claim
      */
-    function disputedSaleReply(uint256 itemId, string calldata sellerReasoning) external { 
-        require(offeredItems[itemId].state == State.Disputed, "Item not disputed");     
+    function disputedSaleReply(uint256 itemId, string calldata sellerReasoning) external {  
+        require(offeredItems[itemId].state == State.Disputed, "Item not disputed");    
         require(offeredItems[itemId].seller == msg.sender, "Not the seller"); 
     
         _openDispute(itemId, sellerReasoning);
     }
-
 
     /** 
         @notice Endpoint to return an item, only the DAO can trigger it
@@ -345,7 +346,7 @@ contract FP_Shop is IFP_Shop, AccessControl {
     /**
         @notice Endpoint to auto-claim the Powerseller badge. The user must have at least 10 valid sales and his first valid sale must be at least 5 weeks old
      */
-    function claimPowersellerBadge() external { 
+    function claimPowersellerBadge() external {
         require(numValidSales[msg.sender] >= 10, "Not enough valid sales");
         require(block.timestamp - firstValidSaleTimestamp[msg.sender] >= 5 weeks, "Not enough time has elapsed"); 
         (bool success, ) = powersellerContract.call(
@@ -364,7 +365,7 @@ contract FP_Shop is IFP_Shop, AccessControl {
     function removeMaliciousSale(uint256 itemId) external onlyRole(ADMIN_ROLE) {
         address seller = offeredItems[itemId].seller;
         require(seller != address(0), "itemId does not exist");
-        
+
         _removePowersellerBadge(seller);
         _blacklist(seller); 
 
@@ -375,7 +376,7 @@ contract FP_Shop is IFP_Shop, AccessControl {
             _closeDispute(itemId);
         } else {
             closeSale(itemId, false, false, false);
-        } 
+        }   
     }
 
     /************************************** Views  *******************************************************/ 
@@ -391,13 +392,21 @@ contract FP_Shop is IFP_Shop, AccessControl {
 
     /**
         @notice View function to return a sale by its ID
-        @param itemId The ID of the sale 
+        @param itemId The ID of the sale
         @return The sale details
      */
     function querySale (uint256 itemId) public view returns (Sale memory) {
         return offeredItems[itemId];
     }
 
+    /**
+        @notice View function to return the number of valid sales of a seller
+        @param seller The address of the seller
+        @return The number of valid sales
+     */
+    function queryNumValidSales(address seller) public view returns (uint256) {
+        return numValidSales[seller];
+    }
 
     /************************************** Internal *****************************************************************/
 
@@ -408,10 +417,10 @@ contract FP_Shop is IFP_Shop, AccessControl {
         @param paySeller Whether the seller should be paid
         @param releaseSellerStake Whether the seller stake should be released
      */
-    function closeSale(uint256 itemId, bool reimburseBuyer, bool paySeller, bool releaseSellerStake) public { 
-        address seller = offeredItems[itemId].seller;   
+    function closeSale(uint256 itemId, bool reimburseBuyer, bool paySeller, bool releaseSellerStake) public {
+        address seller = offeredItems[itemId].seller;
         address buyer = offeredItems[itemId].buyer;
-        uint256 price = offeredItems[itemId].price;   
+        uint256 price = offeredItems[itemId].price;  
 
         // Buyer reimbursement
         if (reimburseBuyer) {
@@ -427,15 +436,14 @@ contract FP_Shop is IFP_Shop, AccessControl {
             }
             (bool success, ) = payable(seller).call{value: price}("");  
             require(success, "Sale payment failed");
-        }      
+        }
         // Seller stake release
         if (releaseSellerStake) {
             vaultContract.doUnlock(seller, price);
-        }    
+        }        
 
         delete offeredItems[itemId];
     }
-
 
     /**
         @notice Add a user to the seller blacklist and slash their funds in the Vault
@@ -443,7 +451,7 @@ contract FP_Shop is IFP_Shop, AccessControl {
      */
     function _blacklist(address user) internal {
         grantRole(BLACKLISTED_ROLE, user);
-
+        
         numValidSales[user] = 0;
         firstValidSaleTimestamp[user] = 0;
 
