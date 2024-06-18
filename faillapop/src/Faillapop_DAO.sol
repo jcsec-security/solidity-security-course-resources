@@ -23,6 +23,12 @@ contract FP_DAO is IFP_DAO, AccessControl {
     uint256 public constant THRESHOLD = 10;
     ///@notice The default number of voters for passing a dispute vote
     uint256 public constant DEFAULT_DISPUTE_QUORUM = 100;
+    ///@notice the minimum committing period for votes on a dispute
+    uint256 constant COMMITTING_TIME = 3 days;
+    ///@notice The minimum revealing period for votes on a dispute
+    uint256 constant MIN_REVEALING_TIME = 1 days;
+    ///@notice The maximum revealing period for votes on a dispute
+    uint256 constant MAX_REVEALING_TIME = 3 days;
     ///@notice The default number of voters for passing an update vote
     uint256 public constant DEFAULT_PROPOSAL_QUORUM = 500;
     ///@notice The time window in which a proposal can not be voted
@@ -51,6 +57,19 @@ contract FP_DAO is IFP_DAO, AccessControl {
         uint256 votesFor;
         uint256 votesAgainst;
         uint256 totalVoters;
+        uint256 committingStartingTime;
+        uint256 revealingStartingTime;
+        DisputeState state;
+    }
+
+    /** 
+        @notice The DisputeState enum is used to record the state of a dispute
+        @dev NOT_ACTIVE is the default value, COMMITTING_PHASE is the state in which users are committing their secret vote, REVEALING_PHASE is the state in which users are revealing their vote
+     */
+    enum DisputeState {
+        NOT_ACTIVE,
+        COMMITTING_PHASE,
+        REVEALING_PHASE
     }
 
     /** 
@@ -83,22 +102,26 @@ contract FP_DAO is IFP_DAO, AccessControl {
 
     /**
         @notice The Vote enum is used to record the vote of a user
-        @dev DIDNT_VOTE is the default value, FOR and AGAINST are the possible votes
+        @dev DIDNT_VOTE is the default value, COMMITTED is the first phase, FOR and AGAINST are the possible votes
      */
     enum Vote {
         DIDNT_VOTE,
+        COMMITTED,
         FOR,
         AGAINST
     }
     
     ///@notice Bool to check if the shop address has been set
     bool private _shopSet = false;
+
     ///@notice Current disputes, indexed by disputeId
     mapping(uint256 => Dispute) public disputes;
     ///@notice The ID of the next dispute to be created
     uint256 public nextDisputeId;
+    ///@dev Mapping between disputeId and user address to record the hash of the vote + secret
+    mapping(uint256 => mapping(address => bytes32)) public commitsOnDisputes;
     ///@dev Mapping between user address and disputeId to record the vote.
-    mapping(address => mapping(uint256 => Vote)) public hasVotedInDispute;
+    mapping(address => mapping(uint256 => Vote)) public hasVotedOnDispute;
     ///@dev Mapping between disputeId and the result of the dispute.
     mapping(uint256 => Vote) public disputeResult;
     ///@dev Mapping between user address and disputeId to record the lottery check.
@@ -111,7 +134,7 @@ contract FP_DAO is IFP_DAO, AccessControl {
     ///@notice The ID of the next upgrade proposal to be created
     uint256 public nextUpgradeProposalId;
     ///@dev Mapping between user address and upgradeProposalId to record the vote
-    mapping(address => mapping(uint256 => Vote)) public hasVotedInUpgradeProposal;
+    mapping(address => mapping(uint256 => Vote)) public hasVotedOnUpgradeProposal;
     ///@dev Mapping between upgradeProposalId and the result of the proposal.
     mapping(uint256 => Vote) public upgradeProposalResult;
     ///@notice Min number of people to pass a proposal
@@ -137,6 +160,8 @@ contract FP_DAO is IFP_DAO, AccessControl {
 
     ///@notice Emitted when the contract configuration is changed, contains the address of the Shop
     event NewConfig(address shop, address nft);
+    ///@notice Emitted when a user commits the hash of his vote, contains the disputeId and the user address 
+    event DisputeVoteCommitted(uint disputeId, address user);
     ///@notice Emitted when a user votes, contains the disputeId and the user address
     event DisputeVoteCasted(uint256 disputeId, address user);
     ///@notice Emitted when a new dispute is created, contains the disputeId and the itemId
@@ -234,29 +259,6 @@ contract FP_DAO is IFP_DAO, AccessControl {
     }
 
     /**
-        @notice Cast a vote on a dispute
-        @param disputeId The ID of the target dispute
-        @param vote The vote, true for FOR, false for AGAINST
-     */
-    function castVoteOnDispute(uint256 disputeId, bool vote) external {
-        require(hasVotedInDispute[msg.sender][disputeId] == Vote.DIDNT_VOTE , "You have already voted");
-        
-        uint256 votingPower = _calcVotingPower(msg.sender);
-        require(votingPower > 0, "You have no voting power");
-
-        if (vote) {
-            disputes[disputeId].votesFor += votingPower;
-            hasVotedInDispute[msg.sender][disputeId] = Vote.FOR;
-        } else {
-            disputes[disputeId].votesAgainst += votingPower;
-        }      
-
-        disputes[disputeId].totalVoters += 1;
-
-        emit DisputeVoteCasted(disputeId, msg.sender);
-    }
-
-    /**
         @notice Open a dispute
         @param itemId The ID of the item involved in the dispute
         @param buyerReasoning The reasoning of the buyer in favor of the claim
@@ -276,7 +278,10 @@ contract FP_DAO is IFP_DAO, AccessControl {
             sellerReasoning,
             0,
             0,
-            0
+            0,
+            block.timestamp,
+            0,
+            DisputeState.COMMITTING_PHASE
         );  
 
         emit NewDispute(dId, itemId);
@@ -284,24 +289,72 @@ contract FP_DAO is IFP_DAO, AccessControl {
     }    
 
     /**
-        @notice Resolve a dispute if enough users have voted and remove it from the storage
+        @notice Commit the hash of the vote
+        @param disputeId The ID of the target dispute
+        @param commit Vote + secret hash
+     */
+    function commitVoteOnDispute(uint256 disputeId, bytes32 commit) external { 
+        require(disputes[disputeId].state == DisputeState.COMMITTING_PHASE, "Dispute is not in committing phase");
+        require(hasVotedOnDispute[msg.sender][disputeId] == Vote.DIDNT_VOTE , "You have already voted");        
+
+        hasVotedOnDispute[msg.sender][disputeId] = Vote.COMMITTED;
+        commitsOnDisputes[disputeId][msg.sender] = commit;
+
+        emit DisputeVoteCommitted(disputeId, msg.sender);
+    }
+
+    /**
+        @notice Reveal a vote on a dispute if commiting time has elapsed
+        @param disputeId The ID of the target dispute
+        @param vote The vote of the user
+        @param secret The secret used to commit the vote
+     */
+    function revealDisputeVote(uint disputeId, bool vote, string calldata secret) external {
+        if(disputes[disputeId].state != DisputeState.REVEALING_PHASE) {
+            if(disputes[disputeId].state == DisputeState.COMMITTING_PHASE && disputes[disputeId].committingStartingTime + COMMITTING_TIME <= block.timestamp) {
+                disputes[disputeId].state = DisputeState.REVEALING_PHASE;
+                disputes[disputeId].revealingStartingTime = block.timestamp;
+            } else {
+                revert("Conditions for advancing to revealing phase are not met");
+            }
+        }        
+        require(hasVotedOnDispute[msg.sender][disputeId] == Vote.COMMITTED, "You currently have no vote to reveal");
+
+        bytes32 voteHash = keccak256(abi.encodePacked(vote, secret));
+        require(commitsOnDisputes[disputeId][msg.sender] == voteHash, "Invalid vote hash");
+
+        uint votingPower = _calcVotingPower(msg.sender);
+        disputes[disputeId].totalVoters += 1;
+
+        if (vote) {
+            disputes[disputeId].votesFor += votingPower;
+            hasVotedOnDispute[msg.sender][disputeId] = Vote.FOR;
+        } else {
+            disputes[disputeId].votesAgainst += votingPower;
+        }
+
+        emit DisputeVoteCasted(disputeId, msg.sender);
+    }
+
+    /**
+        @notice Resolve a dispute if MIN_REVEALING_TIME has elapsed and if enough users have voted or MAX_REVEALING_TIME has elapsed. Then remove it from the storage
         @param disputeId The ID of the target dispute
      */
-    function endDispute(uint256 disputeId) external {  
-        if (disputes[disputeId].totalVoters < disputeQuorum) {
-            revert("Not enough voters");
-        }
+    function endDispute(uint256 disputeId) external { 
+        require(disputes[disputeId].state == DisputeState.REVEALING_PHASE, "Dispute is not in revealing phase");
+        require(disputes[disputeId].revealingStartingTime + MIN_REVEALING_TIME <= block.timestamp, "Minimum revealing time hasn't elapsed");
+        require((disputes[disputeId].totalVoters > disputeQuorum) || (disputes[disputeId].revealingStartingTime + MAX_REVEALING_TIME <= block.timestamp), "Conditions for ending dispute are not met");
 
         uint256 itemId = disputes[disputeId].itemId;
 
         if (disputes[disputeId].votesFor > disputes[disputeId].votesAgainst) {
             delete disputes[disputeId];
-            _buyerWins(itemId);
             disputeResult[disputeId] = Vote.FOR;
+            _buyerWins(itemId);
         } else {
             delete disputes[disputeId];
-            _sellerWins(itemId);
             disputeResult[disputeId] = Vote.AGAINST;
+            _sellerWins(itemId);
         }
 
         emit EndDispute(disputeId, itemId);
@@ -326,9 +379,9 @@ contract FP_DAO is IFP_DAO, AccessControl {
         @param disputeId The ID of the target dispute
      */
     function checkLottery(uint256 disputeId) external notChecked(msg.sender, disputeId) { 
-        require(hasVotedInDispute[msg.sender][disputeId] != Vote.DIDNT_VOTE, "User didn't vote");
+        require(hasVotedOnDispute[msg.sender][disputeId] != Vote.DIDNT_VOTE, "User didn't vote");
         hasCheckedLottery[msg.sender][disputeId] = true;
-        if(disputeResult[disputeId] == hasVotedInDispute[msg.sender][disputeId]) {
+        if(disputeResult[disputeId] == hasVotedOnDispute[msg.sender][disputeId]) {
             _lotteryNFT(msg.sender);
         } else {
             revert("User voted for the wrong side");
@@ -371,17 +424,17 @@ contract FP_DAO is IFP_DAO, AccessControl {
         require(upgradeProposals[proposalId].state == ProposalState.ACTIVE , "Proposal is not active");
         require(upgradeProposals[proposalId].creationTimestamp + PROPOSAL_REVIEW_TIME < block.timestamp, "Proposal is not ready to be voted");
         
-        require(hasVotedInUpgradeProposal[msg.sender][proposalId] == Vote.DIDNT_VOTE , "You have already voted");
+        require(hasVotedOnUpgradeProposal[msg.sender][proposalId] == Vote.DIDNT_VOTE , "You have already voted");
         
         uint256 votingPower = _calcVotingPower(msg.sender);
         require(votingPower > 0, "You have no voting power");
 
         if (vote) {
             upgradeProposals[proposalId].votesFor += votingPower;
-            hasVotedInUpgradeProposal[msg.sender][proposalId] = Vote.FOR;
+            hasVotedOnUpgradeProposal[msg.sender][proposalId] = Vote.FOR;
         } else {
             upgradeProposals[proposalId].votesAgainst += votingPower;
-            hasVotedInUpgradeProposal[msg.sender][proposalId] = Vote.AGAINST; 
+            hasVotedOnUpgradeProposal[msg.sender][proposalId] = Vote.AGAINST; 
         }      
 
         upgradeProposals[proposalId].totalVoters += 1;

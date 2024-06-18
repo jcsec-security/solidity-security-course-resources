@@ -18,11 +18,11 @@ interface IFP_DAO {
     function setShop(address shop) external;
 
     /**
-        @notice Cast a vote on a dispute
+        @notice Commit the hash of the vote
         @param disputeId The ID of the target dispute
-        @param vote The vote, true for FOR, false for AGAINST
+        @param commit Vote + secret hash
      */
-    function castVoteOnDispute(uint256 disputeId, bool vote) external;
+    function commitVoteOnDispute(uint256 disputeId, bytes32 commit) external;
 
     /**
         @notice Open a dispute
@@ -37,7 +37,15 @@ interface IFP_DAO {
     ) external returns (uint256);
 
     /**
-        @notice Resolve a finished dispute
+        @notice Reveal a vote on a dispute if enough users have voted
+        @param disputeId The ID of the target dispute
+        @param vote The vote of the user
+        @param secret The secret used to commit the vote
+     */
+    function revealDisputeVote(uint disputeId, bool vote, string calldata secret) external;
+
+    /**
+        @notice Resolve a dispute if revealing time has elapsed and remove it from the storage
         @param disputeId The ID of the target dispute
      */
     function endDispute(uint256 disputeId) external;
