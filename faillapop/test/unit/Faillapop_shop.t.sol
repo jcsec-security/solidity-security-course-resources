@@ -106,7 +106,7 @@ contract Faillapop_shop_Test is Test {
         dao = new FP_DAO("password", address(coolNFT), address(token));
         vault = new FP_Vault(address(powersellerNFT), address(dao));
 
-        shop.initialize(address(dao), address(vault), address(powersellerNFT));
+        shop.initialize(address(dao), address(vault), address(powersellerNFT), address(coolNFT));
 
         vault.setShop(address(shop));
         dao.setShop(address(shop));

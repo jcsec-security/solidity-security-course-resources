@@ -17,8 +17,9 @@ interface IFP_Shop {
         @param daoAddress The address of the DAO contract
         @param vaultAddress The address of the Vault contract
         @param powersellerNFTAddress The address of the PowersellerNFT contract
+        @param coolNFTAddress The address of the CoolNFT contract
      */
-    function initialize(address daoAddress, address vaultAddress, address powersellerNFTAddress) external;
+    function initialize(address daoAddress, address vaultAddress, address powersellerNFTAddress, address coolNFTAddress) external;
     
     /**
         @notice Endpoint to buy an item

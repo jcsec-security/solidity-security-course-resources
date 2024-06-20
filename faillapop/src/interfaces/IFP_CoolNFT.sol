@@ -26,5 +26,5 @@ interface IFP_CoolNFT {
         @notice DAO can remove a Cool NFT from a user
         @param owner The address of the user that will lose the Cool NFT
     */
-    function burn(address owner) external;
+    function burnAll(address owner) external;
 }

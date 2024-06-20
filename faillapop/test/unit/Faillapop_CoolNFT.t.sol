@@ -26,9 +26,11 @@ contract Faillapop_CoolNFT_Test is Test {
 
     /************************************** Modifiers **************************************/
 
-    modifier mint {
-        vm.prank(address(dao));
-        coolNFT.mintCoolNFT(USER1);
+    modifier mint(uint256 times) {
+        for(uint256 i = 0; i < times; i++) {
+            vm.prank(address(dao));
+            coolNFT.mintCoolNFT(USER1);
+        }
         _;
     }
 
@@ -58,16 +60,30 @@ contract Faillapop_CoolNFT_Test is Test {
         coolNFT.setDAO(address(dao));
     }
 
-    function test_mintCoolNFT() public mint() {
+    function test_setShop() public {
+        assertTrue(coolNFT.hasRole(bytes32(coolNFT.SHOP_ROLE()), address(proxy)));
+    }
+
+    function test_setShop_x2() public {
+        vm.prank(address(dao));
+        vm.expectRevert(bytes("Shop address already set"));
+        coolNFT.setShop(address(proxy));
+    }
+
+    function test_mintCoolNFT() public mint(1) {
+        uint256[] memory userTokenIds = coolNFT.getTokenIds(USER1);
         assertEq(coolNFT.balanceOf(USER1), 1, "Incorrect balance");
-        assertEq(coolNFT.tokenIds(USER1), 1, "Incorrect tokenId");
+        assertEq(userTokenIds[userTokenIds.length-1], 1, "Incorrect tokenId");
         assertEq(coolNFT.ownerOf(1), USER1, "Incorrect owner");
     }
 
-    function test_mintCoolNFT_RevertIf_UserAlreadyHasCoolNFT() public mint() {
-        vm.prank(address(dao));
-        vm.expectRevert(bytes("This user has already a Cool NFT"));
-        coolNFT.mintCoolNFT(USER1);
+    function test_mintCoolNFT_multipleTimes() public mint(15) {
+        uint256[] memory userTokenIds = coolNFT.getTokenIds(USER1);
+        assertEq(coolNFT.balanceOf(USER1), 15, "Incorrect balance");
+        for(uint256 i = 0; i < userTokenIds.length; i++) {
+            assertEq(userTokenIds[i], i+1, "Incorrect tokenId");
+            assertEq(coolNFT.ownerOf(i+1), USER1, "Incorrect owner");
+        }
     }
 
     function test_mintCoolNFT_RevertIf_CallerIsNotDao() public {
@@ -76,51 +92,55 @@ contract Faillapop_CoolNFT_Test is Test {
         coolNFT.mintCoolNFT(USER1);
     }
     
-    function test_burn() public mint() {
-        vm.prank(address(dao));
-        coolNFT.burn(USER1);
+    function test_burnAll() public mint(1) {
+        vm.prank(address(proxy));
+        coolNFT.burnAll(USER1);
+        uint256[] memory userTokenIds = coolNFT.getTokenIds(USER1);
         
         assertEq(coolNFT.balanceOf(USER1), 0, "Incorrect balance");
-        assertEq(coolNFT.tokenIds(USER1), 0, "Incorrect tokenId");
+        assertEq(userTokenIds.length, 0, "Incorrect tokenId");
     }
 
-    function test_burn_RevertIf_CallerIsNotDao() public {
+    function test_burnAll_multipleCoolNFTs() public mint(15) {
+        vm.prank(address(proxy));
+        coolNFT.burnAll(USER1);
+        uint256[] memory userTokenIds = coolNFT.getTokenIds(USER1);
+
+        assertEq(coolNFT.balanceOf(USER1), 0, "Incorrect balance");
+        assertEq(userTokenIds.length, 0, "Incorrect tokenId");
+    }
+
+    function test_burnAll_RevertIf_CallerIsNotShop() public {
         vm.prank(USER1);
-        vm.expectRevert(abi.encodeWithSignature("AccessControlUnauthorizedAccount(address,bytes32)", address(USER1), keccak256("CONTROL_ROLE")));
-        coolNFT.burn(USER1);
+        vm.expectRevert(abi.encodeWithSignature("AccessControlUnauthorizedAccount(address,bytes32)", address(USER1), keccak256("SHOP_ROLE")));
+        coolNFT.burnAll(USER1);
     }
 
-    function test_burn_RevertIf_UserDoesNotHaveCoolNFT() public {
-        vm.prank(address(dao));
-        vm.expectRevert(bytes("This user doesn't have a Cool NFT"));
-        coolNFT.burn(USER2);
-    }
-
-    function test_approve() public mint() {
+    function test_approve() public mint(1) {
         vm.prank(USER1);
         vm.expectRevert(bytes("CoolNFT cannot be approved"));
         coolNFT.approve(USER2, 1);
     }
 
-    function test_setApprovalForAll() public mint() {
+    function test_setApprovalForAll() public mint(1) {
         vm.prank(USER1);
         vm.expectRevert(bytes("CoolNFT cannot be approved"));
         coolNFT.setApprovalForAll(USER2, true);
     }
     
-    function test_transferFrom() public mint() {
+    function test_transferFrom() public mint(1) {
         vm.prank(USER1);
         vm.expectRevert(bytes("CoolNFT cannot be transferred"));
         coolNFT.transferFrom(USER1, USER2, 1);
     }
 
-    function test_safeTransferFrom() public mint() {
+    function test_safeTransferFrom() public mint(1) {
         vm.prank(USER1);
         vm.expectRevert(bytes("CoolNFT cannot be transferred"));
         coolNFT.safeTransferFrom(USER1, USER2, 1);
     }
     
-    function test_safeTransferFrom_withData() public mint() {
+    function test_safeTransferFrom_withData() public mint(1) {
         vm.prank(USER1);
         vm.expectRevert(bytes("CoolNFT cannot be transferred"));
         coolNFT.safeTransferFrom(USER1, USER2, 1, "data");

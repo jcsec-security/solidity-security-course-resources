@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import {IFP_DAO} from "./interfaces/IFP_DAO.sol";
 import {IFP_Shop} from "./interfaces/IFP_Shop.sol";
 import {IFP_Vault} from "./interfaces/IFP_Vault.sol";
+import {IFP_CoolNFT} from "./interfaces/IFP_CoolNFT.sol";
 import {IFP_PowersellerNFT} from "./interfaces/IFP_PowersellerNFT.sol";
 import {AccessControlUpgradeable} from "@openzeppelin-upgradeable/contracts@v5.0.1/access/AccessControlUpgradeable.sol";
 import {Initializable} from "@openzeppelin-upgradeable/contracts@v5.0.1/proxy/utils/Initializable.sol";
@@ -95,6 +96,8 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
     address[] public blacklistedSellers;
     ///@notice PowersellerNFT contract
     IFP_PowersellerNFT public powersellerContract;
+    ///@notice address of the CoolNFT contract
+    IFP_CoolNFT public coolNFTContract;
     ///@notice Faillapop vault contract
     IFP_Vault public vaultContract;
     ///@notice Faillapop DAO contract
@@ -135,13 +138,15 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
         @param daoAddress The address of the DAO contract
         @param vaultAddress The address of the Vault contract
         @param powersellerNFTAddress The address of the PowersellerNFT contract
+        @param coolNFTAddress The address of the CoolNFT contract
      */
-    function initialize(address daoAddress, address vaultAddress, address powersellerNFTAddress) public initializer { 
+    function initialize(address daoAddress, address vaultAddress, address powersellerNFTAddress, address coolNFTAddress) public initializer { 
         AccessControlUpgradeable.__AccessControl_init();
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(DAO_ROLE, daoAddress);
 
         powersellerContract = IFP_PowersellerNFT(powersellerNFTAddress);
+        coolNFTContract = IFP_CoolNFT(coolNFTAddress);
         daoContract = IFP_DAO(daoAddress);
         vaultContract = IFP_Vault(vaultAddress);
     }
@@ -362,6 +367,7 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
         require(seller != address(0), "itemId does not exist");
 
         _removePowersellerBadge(seller);
+        _removeCoolNFTs(seller);
         _blacklist(seller); 
 
         if (offeredItems[itemId].state == State.Pending) {
@@ -464,6 +470,14 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
         if(powersellerContract.checkPrivilege(seller)){
             powersellerContract.removePowersellerNFT(seller);
         }     
+    }
+
+    /**
+        @notice Remove CoolNFTs from a malicious seller
+        @param seller The address of the seller
+     */
+    function _removeCoolNFTs(address seller) internal {
+        coolNFTContract.burnAll(seller);
     }
 
     /** 
