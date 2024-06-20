@@ -561,7 +561,6 @@ contract FP_DAO is IFP_DAO, AccessControl {
 
         if (randomNumber < THRESHOLD) {
             COOL_NFT_CONTRACT.mintCoolNFT(user);
-            
         }
 
         emit AwardNFT(user);
