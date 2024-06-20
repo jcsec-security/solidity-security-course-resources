@@ -14,10 +14,13 @@ import {ERC721} from "@openzeppelin/contracts@v5.0.1/token/ERC721/ERC721.sol";
 */
 contract FP_PowersellerNFT is IFP_PowersellerNFT, ERC721, AccessControl {
 
-    /************************************** State vars  ****************************************************************/ 
+    /************************************** Constants  ****************************************************************/
 
     ///@notice The Control role ID for the AccessControl contract. At first it's the msg.sender and then the shop.
     bytes32 public constant CONTROL_ROLE = keccak256("CONTROL_ROLE");
+
+    /************************************** State vars  ****************************************************************/ 
+
     ///@notice Bool to check if the shop address has been set
     bool private _shopSet = false;
     ///@notice The next tokenId to be minted

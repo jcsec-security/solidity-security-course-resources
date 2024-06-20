@@ -4,6 +4,8 @@ pragma solidity ^0.8.13;
 import {IFP_DAO} from "./interfaces/IFP_DAO.sol";
 import {IFP_Shop} from "./interfaces/IFP_Shop.sol";
 import {IFP_Vault} from "./interfaces/IFP_Vault.sol";
+import {IFP_CoolNFT} from "./interfaces/IFP_CoolNFT.sol";
+import {IFP_PowersellerNFT} from "./interfaces/IFP_PowersellerNFT.sol";
 import {AccessControlUpgradeable} from "@openzeppelin-upgradeable/contracts@v5.0.1/access/AccessControlUpgradeable.sol";
 import {Initializable} from "@openzeppelin-upgradeable/contracts@v5.0.1/proxy/utils/Initializable.sol";
 
@@ -58,11 +60,13 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
     /**
         @dev A Dispute struct represent each of the active disputes in the shop.
         @param itemId The ID of the item being disputed
+        @param disputeTimestamp The timestamp of the dispute
         @param buyerReasoning The reasoning of the buyer for the claim
         @param sellerReasoning The reasoning of the seller against the claim
      */
     struct Dispute {
         uint256 disputeId;
+        uint256 disputeTimestamp;
         string buyerReasoning;
         string sellerReasoning;
     }  
@@ -75,6 +79,8 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
     bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
     ///@notice The blacklisted role ID for the AccessControl contract
     bytes32 public constant BLACKLISTED_ROLE = keccak256("BLACKLISTED_ROLE");
+    ///@notice The maximum time that a dispute can be kept waiting for a seller's reply
+    uint256 public constant MAX_DISPUTE_WAITING_FOR_REPLY = 15 days;
     ///@notice The maximum time a sale can be pending
     uint256 public MAX_PENDING_TIME = 30 days;
 
@@ -92,8 +98,10 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
     mapping (uint256 => Dispute) public disputedItems;
     ///@notice The list of blacklisted seller addresses
     address[] public blacklistedSellers;
-    ///@notice address of the PowersellerNFT contract
-    address public powersellerContract;
+    ///@notice PowersellerNFT contract
+    IFP_PowersellerNFT public powersellerContract;
+    ///@notice address of the CoolNFT contract
+    IFP_CoolNFT public coolNFTContract;
     ///@notice Faillapop vault contract
     IFP_Vault public vaultContract;
     ///@notice Faillapop DAO contract
@@ -133,18 +141,19 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
         @notice Initializer of the contract
         @param daoAddress The address of the DAO contract
         @param vaultAddress The address of the Vault contract
-        @param powersellerNFT The address of the PowersellerNFT contract
+        @param powersellerNFTAddress The address of the PowersellerNFT contract
+        @param coolNFTAddress The address of the CoolNFT contract
      */
-    function initialize(address daoAddress, address vaultAddress, address powersellerNFT) public initializer { 
+    function initialize(address daoAddress, address vaultAddress, address powersellerNFTAddress, address coolNFTAddress) public initializer { 
         AccessControlUpgradeable.__AccessControl_init();
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(DAO_ROLE, daoAddress);
 
-        powersellerContract = powersellerNFT;
+        powersellerContract = IFP_PowersellerNFT(powersellerNFTAddress);
+        coolNFTContract = IFP_CoolNFT(coolNFTAddress);
         daoContract = IFP_DAO(daoAddress);
         vaultContract = IFP_Vault(vaultAddress);
     }
-
 
     /**
         @notice Endpoint to buy an item
@@ -166,7 +175,6 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
         
         emit Buy(msg.sender, itemId);
     }
-	
 
     /**
         @notice Endpoint to dispute a sale. The buyer will supply the supporting info to the DAO
@@ -178,10 +186,9 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
         require(offeredItems[itemId].buyer == msg.sender, "Not the buyer");   
 
         offeredItems[itemId].state = State.Disputed;
-        offeredItems[itemId].buyTimestamp = 0;
 
         // New dispute with ID = 0 until the correct one is set by the DAO
-        Dispute memory newDispute = Dispute(0, buyerReasoning, "");
+        Dispute memory newDispute = Dispute(0, block.timestamp, buyerReasoning, "");
         disputedItems[itemId] = newDispute;
     }
 
@@ -201,29 +208,41 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
         closeSale(itemId, false, true, true);
     }
 
-
     /**
-        @notice Endpoint to close a dispute. Both the DAO and the buyer could call this function to cancel a dispute
+        @notice Endpoint to close a dispute. Both the DAO and the buyer could call this function to cancel a dispute.
+            The buyer can:
+                - Cancel the dispute if the seller is unresponsive, in which case the money is returned to the buyer and the seller is blacklisted.
+                - Cancel the dispute, accepting the item, in which case the buyer is paid. 
         @param itemId The ID of the item being disputed
      */
     function endDispute(uint256 itemId) external {
         require(offeredItems[itemId].state == State.Disputed, "Dispute not found");
 
-        if (msg.sender == offeredItems[itemId].buyer) {
-            // Self-cancelation of the dispute, the buyer accepts the item
-            _closeDispute(itemId);
-
+        if (msg.sender == offeredItems[itemId].buyer) { 
+            if(bytes(disputedItems[itemId].sellerReasoning).length == 0) {
+                // Buyer cancels the dispute, the seller is unresponsive    
+                require( (block.timestamp - disputedItems[itemId].disputeTimestamp) >= MAX_DISPUTE_WAITING_FOR_REPLY, "Insufficient elapsed time" );
+                delete disputedItems[itemId];
+                offeredItems[itemId].state = State.Sold;
+                // Seller should not be paid
+                closeSale(itemId, true, false, true);
+            } else {
+                // Self-cancelation of the dispute, the buyer accepts the item
+                _closeDispute(itemId);
+                // Seller should be paid
+                offeredItems[itemId].state = State.Sold;
+                closeSale(itemId, false, true, true);
+            }
         } else {
             // DAO resolving the dispute in favor of the seller, if the buyer wins `returnItem` will be called
-            _checkRole(DAO_ROLE); // Will revert if msg.sender is doesn't have the DAO_ROLE
-            delete disputedItems[itemId];
-        }
-          
-        offeredItems[itemId].state = State.Sold;
+            _checkRole(DAO_ROLE); // Will revert if msg.sender doesn't have the DAO_ROLE
 
-        // Seller should be paid
-        closeSale(itemId, false, true, true);
-}
+            delete disputedItems[itemId];
+            offeredItems[itemId].state = State.Sold;
+            // Seller should be paid
+            closeSale(itemId, false, true, true);
+        }
+    }
 
     /**
         @notice Endpoint to create a new sale. The seller must have enough funds staked in the Vault so  
@@ -281,7 +300,6 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
         emit ModifyItem(itemId, newTitle);
     }
 
-
     /**
         @notice Endpoint to cancel an active sale
         @param itemId The ID of the item which sale is being cancelled
@@ -293,7 +311,6 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
         //Seller should NOT be paid
         closeSale(itemId, false, false, true);
     }    
-
 
     /**
         @notice Endpoint to set the vacation mode of a seller. If the seller is in vacation mode nobody can buy his goods
@@ -314,16 +331,16 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
         }
     }
 
-
     /**
-        @notice Endpoint to reply to a dispute. The seller will supply the supporting info to the DAO. If the seller does not reply,
-            the admin could mark them as malicious and slash their funds
+        @notice Endpoint to reply to a dispute. The seller will supply the supporting info to the DAO. If the seller does not reply in time,
+            the admin could mark them as malicious and slash their funds, or the buyer could end the dispute and get their money back
         @param itemId The ID of the item being disputed
         @param sellerReasoning The reasoning of the seller for the claim
      */
     function disputedSaleReply(uint256 itemId, string calldata sellerReasoning) external {  
         require(offeredItems[itemId].state == State.Disputed, "Item not disputed");    
         require(offeredItems[itemId].seller == msg.sender, "Not the seller"); 
+        require(bytes(sellerReasoning).length > 0, "Seller's reasoning cannot be empty");
     
         _openDispute(itemId, sellerReasoning);
     }
@@ -349,13 +366,7 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
     function claimPowersellerBadge() external {
         require(numValidSales[msg.sender] >= 10, "Not enough valid sales");
         require(block.timestamp - firstValidSaleTimestamp[msg.sender] >= 5 weeks, "Not enough time has elapsed"); 
-        (bool success, ) = powersellerContract.call(
-            abi.encodeWithSignature(
-                "safeMint(address)",
-                msg.sender
-            )
-        );
-        require(success, "safeMint(address) call failed");
+        powersellerContract.safeMint(msg.sender);
     }
 
     /**
@@ -367,6 +378,7 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
         require(seller != address(0), "itemId does not exist");
 
         _removePowersellerBadge(seller);
+        _removeCoolNFTs(seller);
         _blacklist(seller); 
 
         if (offeredItems[itemId].state == State.Pending) {
@@ -466,25 +478,17 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
         @param seller The address of the seller
      */
     function _removePowersellerBadge(address seller) internal {
-        (bool success, bytes memory data) = powersellerContract.call(
-            abi.encodeWithSignature(
-                "checkPrivilege(address)",
-                seller
-            )
-        ); 
-        require(success, "checkPrivilege() call failed");
+        if(powersellerContract.checkPrivilege(seller)){
+            powersellerContract.removePowersellerNFT(seller);
+        }     
+    }
 
-        bool sellerIsPowerseller = abi.decode(data, (bool));
-
-        if (sellerIsPowerseller) {
-            (success, ) = powersellerContract.call(
-                abi.encodeWithSignature(
-                    "removePowersellerNFT(address)",
-                    seller
-                )
-            );            
-            require(success, "removePowersellerNFT(address) call failed");
-        }        
+    /**
+        @notice Remove CoolNFTs from a malicious seller
+        @param seller The address of the seller
+     */
+    function _removeCoolNFTs(address seller) internal {
+        coolNFTContract.burnAll(seller);
     }
 
     /** 
@@ -519,5 +523,4 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
 
         delete disputedItems[itemId];
     }
-
 }

@@ -8,27 +8,34 @@ import {ERC721} from "@openzeppelin/contracts@v5.0.1/token/ERC721/ERC721.sol";
 /** 
     @title Interface of the FaillaPop Cool NFT
     @author Faillapop team :D 
-    @notice The contract allows the DAO to mint a Cool NFT for users.
+    @notice The contract allows the DAO to mint Cool NFTs for users.
     @dev Security review is pending... should we deploy this?
     @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/solidity-security-teaching-resources
 */
 contract FP_CoolNFT is IFP_CoolNFT, ERC721, AccessControl {
 
-    /************************************** State vars  ****************************************************************/ 
+    /************************************** Constants ****************************************************************/
 
     ///@notice The Control Role ID for the AccessControl contract. At first it's the msg.sender and then the DAO.
     bytes32 public constant CONTROL_ROLE = keccak256("CONTROL_ROLE");
+    ///@notice The Shop Role ID for the AccessControl contract. At first it's the msg.sender and then the shop.
+    bytes32 public constant SHOP_ROLE = keccak256("SHOP_ROLE");
+    
+    /************************************** State vars  ****************************************************************/ 
+
     ///@notice Bool to check if the DAO address has been set
     bool private _daoSet = false;
+    ///@notice Bool to check if the shop address has been set
+    bool private _shopSet = false;
     ///@notice The next tokenId to be minted
     uint256 public nextTokenId;
     ///@notice Mapping from user address to tokenId
-    mapping (address => uint256) public tokenIds;
+    mapping (address => uint256[]) public tokenIds;
 
      /************************************** Events and modifiers *****************************************************/
 
-    ///@notice Emitted when a user loses a PowerSeller badge
-    event CoolNFT_Removed(address indexed owner, uint256 tokenId);
+    ///@notice Emitted when a user's coolNFTs are slashed
+    event CoolNFTs_Slashed(address indexed owner);
     ///@notice Emitted when a user receives a PowerSeller badge
     event CoolNFT_Minted(address indexed owner, uint256 tokenId);
 
@@ -37,6 +44,14 @@ contract FP_CoolNFT is IFP_CoolNFT, ERC721, AccessControl {
      */
     modifier daoNotSet() {
         require(!_daoSet, "DAO address already set");
+        _;
+    }
+
+    /**
+        @notice Modifier to check if the Shop address has been set
+     */
+    modifier shopNotSet() {
+        require(!_shopSet, "Shop address already set");
         _;
     }
 
@@ -59,29 +74,43 @@ contract FP_CoolNFT is IFP_CoolNFT, ERC721, AccessControl {
     }
 
     /**
+        @notice Sets the shop address as the SHOP_ROLE
+        @param shopAddress The address of the shop contract
+    */
+    function setShop(address shopAddress) external onlyRole(CONTROL_ROLE) shopNotSet {
+        _shopSet = true;
+        _grantRole(SHOP_ROLE, shopAddress);
+    }
+
+    /**
         @notice Mints a Cool NFT for the user
         @param to The address of the user that will receive the Cool NFT
     */
     function mintCoolNFT(address to) external onlyRole(CONTROL_ROLE) {
-        require(tokenIds[to] == 0, "This user has already a Cool NFT");
         nextTokenId++;
-        tokenIds[to] = nextTokenId;
+        tokenIds[to].push(nextTokenId);
         _safeMint(to, nextTokenId);
         
         emit CoolNFT_Minted(to, nextTokenId);
     }
 
     /**
-        @notice DAO can remove all the Cool NFTs from a user
+        @notice Shop can remove all the Cool NFTs from a user
         @param owner The address of the user that will lose his Cool NFTs
     */
-    function burn(address owner) external onlyRole(CONTROL_ROLE) {
-        require(tokenIds[owner] != 0, "This user doesn't have a Cool NFT");
-        uint256 tokenId = tokenIds[owner];
-        tokenIds[owner] = 0;
-        _burn(tokenId);
+    function burnAll(address owner) external onlyRole(SHOP_ROLE) {
+        if(tokenIds[owner].length > 0){
+            uint256[] memory userTokens = tokenIds[owner];
+            for (uint256 i = 0; i < userTokens.length; i++) { 
+                _burn(userTokens[i]);
+            }
+            tokenIds[owner] = new uint256[](0);
+            emit CoolNFTs_Slashed(owner);
+        }
+    }
 
-        emit CoolNFT_Removed(owner, tokenId);
+    function getTokenIds(address owner) external view returns(uint256[] memory){
+        return tokenIds[owner];
     }
 
     /************************************** Public  ****************************************************************/

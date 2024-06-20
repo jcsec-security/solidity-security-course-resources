@@ -23,10 +23,11 @@ contract DeployFaillapop is Script {
         proxy = new FP_Proxy(
             address(shop), 
             abi.encodeWithSignature(
-                "initialize(address,address,address)",
+                "initialize(address,address,address,address)",
                 address(dao),
                 address(vault), 
-                address(powersellerNFT)
+                address(powersellerNFT),
+                address(coolNFT)
                 ), 
             address(dao)
         );
@@ -34,6 +35,7 @@ contract DeployFaillapop is Script {
         vault.setShop(address(proxy));
         dao.setShop(address(proxy));
         powersellerNFT.setShop(address(proxy));
+        coolNFT.setShop(address(proxy));
         coolNFT.setDAO(address(dao));
         vm.stopBroadcast();
     }

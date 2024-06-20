@@ -27,6 +27,9 @@ contract Faillapop_shop_Test is Test {
     FP_CoolNFT public coolNFT;
     FP_PowersellerNFT public powersellerNFT;
 
+    ///@notice The maximum time that a dispute can be kept waiting for a seller's reply
+    uint256 public constant MAX_DISPUTE_WAITING_FOR_REPLY = 15 days;
+
     address public constant SELLER1 = address(3);
     address public constant BUYER1 = address(4);
     address public constant USER1 = address(5);
@@ -106,7 +109,7 @@ contract Faillapop_shop_Test is Test {
         dao = new FP_DAO("password", address(coolNFT), address(token));
         vault = new FP_Vault(address(powersellerNFT), address(dao));
 
-        shop.initialize(address(dao), address(vault), address(powersellerNFT));
+        shop.initialize(address(dao), address(vault), address(powersellerNFT), address(coolNFT));
 
         vault.setShop(address(shop));
         dao.setShop(address(shop));
@@ -170,9 +173,9 @@ contract Faillapop_shop_Test is Test {
         assertEq(disputedSale.seller, SELLER1, "Wrong seller, sale dispute failed");
         assertEq(disputedSale.buyer, BUYER1, "Wrong buyer, sale dispute failed");
         assertEq(uint(disputedSale.state), uint(FP_Shop.State.Disputed), "Wrong state, sale dispute failed");
-        assertEq(disputedSale.buyTimestamp, 0, "Wrong timestamp, sale dispute failed");
         assertEq(dispute.disputeId, 0, "Wrong disputeId, sale dispute failed");
         assertEq(dispute.buyerReasoning, "Buyer's reasoning", "Wrong buyerReasoning, sale dispute failed");
+        assertEq(dispute.disputeTimestamp, block.timestamp, "Wrong timestamp, sale dispute failed");
     }
 
     function test_disputeSale_RevertIf_CallerIsNotTheBuyer() public createLegitSale() buyLastItem() {
@@ -217,7 +220,7 @@ contract Faillapop_shop_Test is Test {
         shop.disputeSale(0, "Buyer's reasoning");
     }
 
-    function test_itemReceived_fromBuyer() public createLegitSale() buyLastItem() {
+    function test_itemReceived_FromBuyer() public createLegitSale() buyLastItem() {
         // confirm item received
         vm.prank(BUYER1);
         shop.itemReceived(0);
@@ -245,7 +248,7 @@ contract Faillapop_shop_Test is Test {
         shop.itemReceived(0);
     }
 
-    function test_itemReceived_fromSeller() public createLegitSale() buyLastItem() {
+    function test_itemReceived_FromSeller() public createLegitSale() buyLastItem() {
         // block.timestamp manipulation
         FP_Shop.Sale memory sale = shop.querySale(0);
         vm.warp(sale.buyTimestamp + 30 days);
@@ -270,7 +273,7 @@ contract Faillapop_shop_Test is Test {
         assertEq(vault.userLockedBalance(SELLER1), sellerFundsLockedBefore - sale.price, "Wrong locked funds, item received failed");
     }  
 
-    function test_itemReceived_fromSeller_RevertIf_InsufficientElapsedTime() public createLegitSale() buyLastItem() {
+    function test_itemReceived_FromSeller_RevertIf_InsufficientElapsedTime() public createLegitSale() buyLastItem() {
         // block.timestamp manipulation
         FP_Shop.Sale memory sale = shop.querySale(0);
         vm.warp(sale.buyTimestamp + 25 days);
@@ -281,7 +284,7 @@ contract Faillapop_shop_Test is Test {
         shop.itemReceived(0);
     }
 
-    function test_endDispute_FromBuyer() public createLegitSale() buyLastItem() disputeSale() {
+    function test_endDispute_Replied_FromBuyer() public createLegitSale() buyLastItem() disputeSale() replyDisputedSale() {
         uint256 balanceSellerBefore = address(SELLER1).balance;
         uint256 sellerFundsLockedBefore = vault.userLockedBalance(SELLER1);
         FP_Shop.Sale memory sale = shop.querySale(0);
@@ -304,6 +307,7 @@ contract Faillapop_shop_Test is Test {
         assertEq(address(SELLER1).balance, balanceSellerBefore + sale.price, "Wrong balance, item received failed");
         assertEq(vault.userLockedBalance(SELLER1), sellerFundsLockedBefore - sale.price, "Wrong locked funds, item received failed");
         assertEq(dispute.disputeId, 0, "Wrong disputeId, end dispute failed");
+        assertEq(dispute.disputeTimestamp, 0, "Wrong timestamp, sale dispute failed");
         assertEq(dispute.buyerReasoning, "", "Wrong buyerReasoning, end dispute failed");
         assertEq(dispute.sellerReasoning, "", "Wrong sellerReasoning, end dispute failed");
     }
@@ -333,6 +337,52 @@ contract Faillapop_shop_Test is Test {
         assertEq(dispute.disputeId, 0, "Wrong disputeId, end dispute failed");
         assertEq(dispute.buyerReasoning, "", "Wrong buyerReasoning, end dispute failed");
         assertEq(dispute.sellerReasoning, "", "Wrong sellerReasoning, end dispute failed");
+    }
+
+    function test_endDispute_NotReplied_FromBuyer() public createLegitSale() buyLastItem() disputeSale() {
+        uint256 balanceSellerBefore = address(SELLER1).balance;
+        uint256 sellerFundsLockedBefore = vault.userLockedBalance(SELLER1);
+        uint256 balanceBuyerBefore = address(BUYER1).balance;
+
+        FP_Shop.Sale memory sale = shop.querySale(0);
+
+        // End dispute
+        vm.warp(block.timestamp + MAX_DISPUTE_WAITING_FOR_REPLY);
+        vm.prank(BUYER1);
+        shop.endDispute(0);
+
+        // Check the correct end of the dispute        
+        FP_Shop.Sale memory closedSale = shop.querySale(0);
+        FP_Shop.Dispute memory dispute = shop.queryDispute(0);
+
+        assertEq(closedSale.seller, address(0), "Wrong seller, item received failed");
+        assertEq(closedSale.buyer, address(0), "Wrong buyer, item received failed");
+        assertEq(closedSale.title, "", "Wrong title, item received failed");
+        assertEq(closedSale.description, "", "Wrong description, item received failed");
+        assertEq(closedSale.price, 0, "Wrong price, item received failed");
+        assertEq(uint(closedSale.state), uint(FP_Shop.State.Undefined), "Wrong state, item received failed");
+        assertEq(closedSale.buyTimestamp, 0, "Wrong timestamp, item received failed");
+        assertEq(address(SELLER1).balance, balanceSellerBefore, "Wrong seller balance, item received failed");
+        assertEq(vault.userLockedBalance(SELLER1), sellerFundsLockedBefore - sale.price, "Wrong seller locked funds, item received failed");
+        assertEq(address(BUYER1).balance, balanceBuyerBefore + sale.price, "Wrong buyer balance, item received failed");
+        assertEq(dispute.disputeId, 0, "Wrong disputeId, end dispute failed");
+        assertEq(dispute.disputeTimestamp, 0, "Wrong timestamp, sale dispute failed");
+        assertEq(dispute.buyerReasoning, "", "Wrong buyerReasoning, end dispute failed");
+        assertEq(dispute.sellerReasoning, "", "Wrong sellerReasoning, end dispute failed");
+    }
+
+    function test_endDispute_NotReplied_FromBuyer_RevertIf_InsufficientElapsedTime() public createLegitSale() buyLastItem() disputeSale() {
+        uint256 balanceSellerBefore = address(SELLER1).balance;
+        uint256 sellerFundsLockedBefore = vault.userLockedBalance(SELLER1);
+        uint256 balanceBuyerBefore = address(BUYER1).balance;
+
+        FP_Shop.Sale memory sale = shop.querySale(0);
+
+        // End dispute
+        vm.warp(block.timestamp + MAX_DISPUTE_WAITING_FOR_REPLY - 3 days);
+        vm.prank(BUYER1);
+        vm.expectRevert(bytes("Insufficient elapsed time"));
+        shop.endDispute(0);
     }
 
     function test_endDispute_RevertIf_SaleIsUndefined() public {
@@ -677,10 +727,16 @@ contract Faillapop_shop_Test is Test {
         assertEq(disputedSale.seller, SELLER1, "Wrong seller, sale dispute failed");
         assertEq(disputedSale.buyer, BUYER1, "Wrong buyer, sale dispute failed");
         assertEq(uint(disputedSale.state), uint(FP_Shop.State.Disputed), "Wrong state, sale dispute failed");
-        assertEq(disputedSale.buyTimestamp, 0, "Wrong timestamp, sale dispute failed");
         assertEq(dispute.disputeId, 0, "Wrong disputeId, sale dispute failed");
         assertEq(dispute.buyerReasoning, "Buyer's reasoning", "Wrong buyerReasoning, sale dispute failed");
         assertEq(dispute.sellerReasoning, "Seller's reasoning", "Wrong sellerReasoning, sale dispute failed");
+    }
+
+    function test_disputedSaleReply_RevertIf_SellerReasoningIsEmpty() public createLegitSale() buyLastItem() disputeSale() {
+        // Reply to dispute
+        vm.prank(SELLER1);
+        vm.expectRevert(bytes("Seller's reasoning cannot be empty"));
+        shop.disputedSaleReply(0, "");
     }
 
     function test_disputedSaleReply_RevertIf_CallerIsNotTheSeller() public createLegitSale() buyLastItem() disputeSale() {
@@ -871,7 +927,7 @@ contract Faillapop_shop_Test is Test {
         vm.prank(SELLER1);
         shop.claimPowersellerBadge();
 
-        vm.expectRevert(bytes("safeMint(address) call failed"));
+        vm.expectRevert("This user is already a Powerseller");
         vm.prank(SELLER1);
         shop.claimPowersellerBadge();
     }

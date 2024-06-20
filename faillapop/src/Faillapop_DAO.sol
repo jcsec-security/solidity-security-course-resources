@@ -18,30 +18,38 @@ import {IERC20} from "@openzeppelin/contracts@v5.0.1/token/ERC20/IERC20.sol";
 */
 contract FP_DAO is IFP_DAO, AccessControl {
     
-    /************************************** Constants *******************************************************/
-    ///@notice The threshold for the random number generator
-    uint256 public constant THRESHOLD = 10;
-    ///@notice The default number of voters for passing a dispute vote
-    uint256 public constant DEFAULT_DISPUTE_QUORUM = 100;
-    ///@notice the minimum committing period for votes on a dispute
-    uint256 constant COMMITTING_TIME = 3 days;
-    ///@notice The minimum revealing period for votes on a dispute
-    uint256 constant MIN_REVEALING_TIME = 1 days;
-    ///@notice The maximum revealing period for votes on a dispute
-    uint256 constant MAX_REVEALING_TIME = 3 days;
-    ///@notice The default number of voters for passing an update vote
-    uint256 public constant DEFAULT_PROPOSAL_QUORUM = 500;
-    ///@notice The time window in which a proposal can not be voted
-    uint256 public constant PROPOSAL_REVIEW_TIME = 1 days;
-    ///@notice The minimum voting period for a proposal
-    uint256 public constant PROPOSAL_VOTING_TIME = 3 days;
-    ///@notice The minimum waiting time between approval and execution of a proposal
-    uint256 public constant PROPOSAL_EXECUTION_DELAY = 1 days;
-    ///@notice The Control role ID for the AccessControl contract. At first it's the msg.sender and then the shop.
-    bytes32 public constant CONTROL_ROLE = keccak256("CONTROL_ROLE");
+    /************************************** Enums & Structs *******************************************************/
 
+    /** 
+        @notice The DisputeState enum is used to record the state of a dispute
+        @dev NOT_ACTIVE is the default value, COMMITTING_PHASE is the state in which users are committing their secret vote, REVEALING_PHASE is the state in which users are revealing their vote
+     */
+    enum DisputeState {
+        NOT_ACTIVE,
+        COMMITTING_PHASE,
+        REVEALING_PHASE
+    }
 
-    /************************************** State vars and Structs *******************************************************/
+    /** 
+        @notice The ProposalState enum is used to record the state of a proposal
+        @dev NOT_ACTIVE is the default value, ACTIVE is the state of an existing proposal, PASSED is the state of a proposal that has been voted and passed but not yet executed
+     */
+    enum ProposalState {
+        NOT_ACTIVE,
+        ACTIVE,
+        PASSED
+    }
+
+    /**
+        @notice The Vote enum is used to record the vote of a user
+        @dev DIDNT_VOTE is the default value, COMMITTED is the first phase, FOR and AGAINST are the possible votes
+     */
+    enum Vote {
+        DIDNT_VOTE,
+        COMMITTED,
+        FOR,
+        AGAINST
+    }
     
     /** 
         @notice A Dispute includes the itemId, the reasoning of the buyer and the seller on the claim,
@@ -63,16 +71,6 @@ contract FP_DAO is IFP_DAO, AccessControl {
     }
 
     /** 
-        @notice The DisputeState enum is used to record the state of a dispute
-        @dev NOT_ACTIVE is the default value, COMMITTING_PHASE is the state in which users are committing their secret vote, REVEALING_PHASE is the state in which users are revealing their vote
-     */
-    enum DisputeState {
-        NOT_ACTIVE,
-        COMMITTING_PHASE,
-        REVEALING_PHASE
-    }
-
-    /** 
         @notice An UpgradeProposal includes the address of the creator, the id, the creationTimestamp, the new contract address, 
         the number of votes for and against the proposal, the total number of voters and the status of the proposal.
         @dev newShop is the address of the new contract which can be checked on etherscan
@@ -89,27 +87,37 @@ contract FP_DAO is IFP_DAO, AccessControl {
         ProposalState state;
     }
 
-    /** 
-        @notice The ProposalState enum is used to record the state of a proposal
-        @dev NOT_ACTIVE is the default value, ACTIVE is the state of an existing proposal, PASSED is the state of a proposal that has been voted and passed but not yet executed
-     */
-    enum ProposalState {
-        NOT_ACTIVE,
-        ACTIVE,
-        PASSED
-    }
+    /************************************** Constants *******************************************************/
 
+    ///@notice The threshold for the random number generator
+    uint256 public constant THRESHOLD = 10;
+    ///@notice The default number of voters for passing a dispute vote
+    uint256 public constant DEFAULT_DISPUTE_QUORUM = 100;
+    ///@notice the minimum committing period for votes on a dispute
+    uint256 constant COMMITTING_TIME = 3 days;
+    ///@notice The minimum revealing period for votes on a dispute
+    uint256 constant MIN_REVEALING_TIME = 1 days;
+    ///@notice The maximum revealing period for votes on a dispute
+    uint256 constant MAX_REVEALING_TIME = 3 days;
+    ///@notice The default number of voters for passing an update vote
+    uint256 public constant DEFAULT_PROPOSAL_QUORUM = 500;
+    ///@notice The time window in which a proposal can not be voted
+    uint256 public constant PROPOSAL_REVIEW_TIME = 1 days;
+    ///@notice The minimum voting period for a proposal
+    uint256 public constant PROPOSAL_VOTING_TIME = 3 days;
+    ///@notice The minimum waiting time between approval and execution of a proposal
+    uint256 public constant PROPOSAL_EXECUTION_DELAY = 1 days;
+    ///@notice The Control role ID for the AccessControl contract. At first it's the msg.sender and then the shop.
+    bytes32 public constant CONTROL_ROLE = keccak256("CONTROL_ROLE");
 
-    /**
-        @notice The Vote enum is used to record the vote of a user
-        @dev DIDNT_VOTE is the default value, COMMITTED is the first phase, FOR and AGAINST are the possible votes
-     */
-    enum Vote {
-        DIDNT_VOTE,
-        COMMITTED,
-        FOR,
-        AGAINST
-    }
+    /************************************** Immutables *******************************************************/
+
+    ///@notice The CoolNFT contract
+    IFP_CoolNFT public immutable COOL_NFT_CONTRACT;
+    ///@notice The FPT token contract
+    IERC20 public immutable FPT_CONTRACT;
+
+    /************************************** State vars *******************************************************/
     
     ///@notice Bool to check if the shop address has been set
     bool private _shopSet = false;
@@ -144,10 +152,6 @@ contract FP_DAO is IFP_DAO, AccessControl {
     string private _password;
     ///@notice The address of the Shop contract
     address public shopAddress;
-    ///@notice The CoolNFT contract
-    IFP_CoolNFT public coolNFTContract;
-    ///@notice The FPT token contract
-    IERC20 public immutable fptContract;
 
 
     /*************************************** Errors *******************************************************/
@@ -244,8 +248,8 @@ contract FP_DAO is IFP_DAO, AccessControl {
     constructor(string memory magicWord, address nftAddress, address fptAddress) {
         _password = magicWord;
         _grantRole(CONTROL_ROLE, msg.sender);
-        coolNFTContract = IFP_CoolNFT(nftAddress);
-        fptContract = IERC20(fptAddress);
+        COOL_NFT_CONTRACT = IFP_CoolNFT(nftAddress);
+        FPT_CONTRACT = IERC20(fptAddress);
     }
 
     /**
@@ -556,8 +560,7 @@ contract FP_DAO is IFP_DAO, AccessControl {
         ))));
 
         if (randomNumber < THRESHOLD) {
-            coolNFTContract.mintCoolNFT(user);
-            
+            COOL_NFT_CONTRACT.mintCoolNFT(user);
         }
 
         emit AwardNFT(user);
@@ -593,9 +596,10 @@ contract FP_DAO is IFP_DAO, AccessControl {
 
     /**
         @notice Calculate the voting power of a user
+        @param user The address of the user to calculate the voting power
      */
     function _calcVotingPower(address user) internal view returns (uint256) {
-        return fptContract.balanceOf(user);
+        return FPT_CONTRACT.balanceOf(user);
     } 
 
     /**

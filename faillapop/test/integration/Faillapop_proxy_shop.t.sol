@@ -179,7 +179,6 @@ contract Faillapop_proxy_shop_Test is Test {
         assertEq(disputedSale.seller, SELLER1, "Wrong seller, sale dispute failed");
         assertEq(disputedSale.buyer, BUYER1, "Wrong buyer, sale dispute failed");
         assertEq(uint(disputedSale.state), uint(FP_Shop.State.Disputed), "Wrong state, sale dispute failed");
-        assertEq(disputedSale.buyTimestamp, 0, "Wrong timestamp, sale dispute failed");
         assertEq(dispute.disputeId, 0, "Wrong disputeId, sale dispute failed");
         assertEq(dispute.buyerReasoning, "Buyer's reasoning", "Wrong buyerReasoning, sale dispute failed");
     }
@@ -226,7 +225,7 @@ contract Faillapop_proxy_shop_Test is Test {
         assertFalse(success, "Call should revert");
     }
 
-    function test_itemReceived_fromBuyer() public createLegitSale() buyLastItem() {
+    function test_itemReceived_FromBuyer() public createLegitSale() buyLastItem() {
         // confirm item received
         vm.prank(BUYER1);
         bool success = _itemReceived(0);
@@ -258,7 +257,7 @@ contract Faillapop_proxy_shop_Test is Test {
         assertFalse(success, "Call should revert");
     }
 
-    function test_itemReceived_fromSeller() public createLegitSale() buyLastItem() {
+    function test_itemReceived_FromSeller() public createLegitSale() buyLastItem() {
         // block.timestamp manipulation
         (bool success, bytes memory data) = _querySale(0);
         assertTrue(success, "Sale not queried");
@@ -290,7 +289,7 @@ contract Faillapop_proxy_shop_Test is Test {
         assertEq(vault.userLockedBalance(SELLER1), sellerFundsLockedBefore - sale.price, "Wrong locked funds, item received failed");
     }  
 
-    function test_itemReceived_fromSeller_RevertIf_InsufficientElapsedTime() public createLegitSale() buyLastItem() {
+    function test_itemReceived_FromSeller_RevertIf_InsufficientElapsedTime() public createLegitSale() buyLastItem() {
         // block.timestamp manipulation
         (bool success, bytes memory data) = _querySale(0);
         assertTrue(success, "Sale not queried");
@@ -304,7 +303,7 @@ contract Faillapop_proxy_shop_Test is Test {
         assertTrue(success2, "Call should revert"); 
     }
 
-    function test_endDispute_FromBuyer() public createLegitSale() buyLastItem() disputeSale() {
+    function test_endDispute_FromBuyer() public createLegitSale() buyLastItem() disputeSale() replyDisputedSale() {
         uint256 balanceSellerBefore = address(SELLER1).balance;
         uint256 sellerFundsLockedBefore = vault.userLockedBalance(SELLER1);
         (bool success, bytes memory data) = _querySale(0);
@@ -722,7 +721,6 @@ contract Faillapop_proxy_shop_Test is Test {
         assertEq(disputedSale.seller, SELLER1, "Wrong seller, sale dispute failed");
         assertEq(disputedSale.buyer, BUYER1, "Wrong buyer, sale dispute failed");
         assertEq(uint(disputedSale.state), uint(FP_Shop.State.Disputed), "Wrong state, sale dispute failed");
-        assertEq(disputedSale.buyTimestamp, 0, "Wrong timestamp, sale dispute failed");
         assertEq(dispute.disputeId, 0, "Wrong disputeId, sale dispute failed");
         assertEq(dispute.buyerReasoning, "Buyer's reasoning", "Wrong buyerReasoning, sale dispute failed");
         assertEq(dispute.sellerReasoning, "Seller's reasoning", "Wrong sellerReasoning, sale dispute failed");
