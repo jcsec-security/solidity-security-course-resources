@@ -3,19 +3,18 @@ pragma solidity ^0.8.13;
 
 import {ERC1967Proxy} from "@openzeppelin/contracts@v5.0.1/proxy/ERC1967/ERC1967Proxy.sol";
 import {ERC1967Utils} from "@openzeppelin/contracts@v5.0.1/proxy/ERC1967/ERC1967Utils.sol";
-import {AccessControl} from "@openzeppelin/contracts@v5.0.1/access/AccessControl.sol";
 
 /**
  * @dev This contract implements an upgradeable proxy. 
  * The implementation address is stored in storage in the location specified by https://eips.ethereum.org/EIPS/eip-1967[EIP1967], 
  * so that it doesn't conflict with the storage layout of the implementation behind the proxy.
  */
-contract FP_Proxy is ERC1967Proxy, AccessControl {
+contract FP_Proxy is ERC1967Proxy {
 
     /************************************** Constants *******************************************************/
 
-    ///@notice The DAO role ID for the AccessControl contract
-    bytes32 public constant DAO_ROLE = keccak256("DAO_ROLE");
+    ///@notice The address of the DAO contract
+    address public immutable DAO_ADDRESS;
 
 
     /************************************** External *******************************************************/
@@ -31,7 +30,7 @@ contract FP_Proxy is ERC1967Proxy, AccessControl {
      * - If `data` is empty, `msg.value` must be zero.
      */
     constructor(address implementation, bytes memory _data, address _dao) ERC1967Proxy(implementation, _data) {
-        _grantRole(DAO_ROLE, _dao);
+        DAO_ADDRESS = _dao;
     }
 
     /**
@@ -41,7 +40,8 @@ contract FP_Proxy is ERC1967Proxy, AccessControl {
      *
      * Emits an {IERC1967-Upgraded} event.
      */  
-    function upgradeToAndCall(address _newImplementation, bytes memory _data) external onlyRole(DAO_ROLE) { 
+    function upgradeToAndCall(address _newImplementation, bytes memory _data) external { 
+        require(msg.sender == DAO_ADDRESS, "AccessControlUnauthorizedAccount");
         ERC1967Utils.upgradeToAndCall(_newImplementation, _data);        
     }
 

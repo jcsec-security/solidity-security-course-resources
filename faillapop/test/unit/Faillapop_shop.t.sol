@@ -871,7 +871,7 @@ contract Faillapop_shop_Test is Test {
         vm.prank(SELLER1);
         shop.claimPowersellerBadge();
 
-        vm.expectRevert(bytes("safeMint(address) call failed"));
+        vm.expectRevert("This user is already a Powerseller");
         vm.prank(SELLER1);
         shop.claimPowersellerBadge();
     }

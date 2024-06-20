@@ -14,10 +14,14 @@ import {ERC721} from "@openzeppelin/contracts@v5.0.1/token/ERC721/ERC721.sol";
 */
 contract FP_CoolNFT is IFP_CoolNFT, ERC721, AccessControl {
 
-    /************************************** State vars  ****************************************************************/ 
+    /************************************** Constants ****************************************************************/
 
     ///@notice The Control Role ID for the AccessControl contract. At first it's the msg.sender and then the DAO.
     bytes32 public constant CONTROL_ROLE = keccak256("CONTROL_ROLE");
+    
+    
+    /************************************** State vars  ****************************************************************/ 
+    
     ///@notice Bool to check if the DAO address has been set
     bool private _daoSet = false;
     ///@notice The next tokenId to be minted

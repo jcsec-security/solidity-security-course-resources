@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 import {IFP_DAO} from "./interfaces/IFP_DAO.sol";
 import {IFP_Shop} from "./interfaces/IFP_Shop.sol";
 import {IFP_Vault} from "./interfaces/IFP_Vault.sol";
+import {IFP_PowersellerNFT} from "./interfaces/IFP_PowersellerNFT.sol";
 import {AccessControlUpgradeable} from "@openzeppelin-upgradeable/contracts@v5.0.1/access/AccessControlUpgradeable.sol";
 import {Initializable} from "@openzeppelin-upgradeable/contracts@v5.0.1/proxy/utils/Initializable.sol";
 
@@ -92,8 +93,8 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
     mapping (uint256 => Dispute) public disputedItems;
     ///@notice The list of blacklisted seller addresses
     address[] public blacklistedSellers;
-    ///@notice address of the PowersellerNFT contract
-    address public powersellerContract;
+    ///@notice PowersellerNFT contract
+    IFP_PowersellerNFT public powersellerContract;
     ///@notice Faillapop vault contract
     IFP_Vault public vaultContract;
     ///@notice Faillapop DAO contract
@@ -133,14 +134,14 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
         @notice Initializer of the contract
         @param daoAddress The address of the DAO contract
         @param vaultAddress The address of the Vault contract
-        @param powersellerNFT The address of the PowersellerNFT contract
+        @param powersellerNFTAddress The address of the PowersellerNFT contract
      */
-    function initialize(address daoAddress, address vaultAddress, address powersellerNFT) public initializer { 
+    function initialize(address daoAddress, address vaultAddress, address powersellerNFTAddress) public initializer { 
         AccessControlUpgradeable.__AccessControl_init();
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(DAO_ROLE, daoAddress);
 
-        powersellerContract = powersellerNFT;
+        powersellerContract = IFP_PowersellerNFT(powersellerNFTAddress);
         daoContract = IFP_DAO(daoAddress);
         vaultContract = IFP_Vault(vaultAddress);
     }
@@ -349,13 +350,7 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
     function claimPowersellerBadge() external {
         require(numValidSales[msg.sender] >= 10, "Not enough valid sales");
         require(block.timestamp - firstValidSaleTimestamp[msg.sender] >= 5 weeks, "Not enough time has elapsed"); 
-        (bool success, ) = powersellerContract.call(
-            abi.encodeWithSignature(
-                "safeMint(address)",
-                msg.sender
-            )
-        );
-        require(success, "safeMint(address) call failed");
+        powersellerContract.safeMint(msg.sender);
     }
 
     /**
@@ -466,25 +461,9 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
         @param seller The address of the seller
      */
     function _removePowersellerBadge(address seller) internal {
-        (bool success, bytes memory data) = powersellerContract.call(
-            abi.encodeWithSignature(
-                "checkPrivilege(address)",
-                seller
-            )
-        ); 
-        require(success, "checkPrivilege() call failed");
-
-        bool sellerIsPowerseller = abi.decode(data, (bool));
-
-        if (sellerIsPowerseller) {
-            (success, ) = powersellerContract.call(
-                abi.encodeWithSignature(
-                    "removePowersellerNFT(address)",
-                    seller
-                )
-            );            
-            require(success, "removePowersellerNFT(address) call failed");
-        }        
+        if(powersellerContract.checkPrivilege(seller)){
+            powersellerContract.removePowersellerNFT(seller);
+        }     
     }
 
     /** 
@@ -519,5 +498,4 @@ contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
 
         delete disputedItems[itemId];
     }
-
 }

@@ -31,7 +31,7 @@ contract Faillapop_Proxy_Test is Test {
     /************************************** Tests **************************************/  
 
     function test_setUp() external {
-        assertTrue(proxy.hasRole(keccak256("DAO_ROLE"), address(dao)));
+        assertEq(proxy.DAO_ADDRESS(), address(dao));
         assertEq(proxy.getImplementation(), address(shop));
     }
 
@@ -47,11 +47,10 @@ contract Faillapop_Proxy_Test is Test {
 
     function test_upgradeToAndCall_RevertIf_CallerIsNotTheDao() external {
         FP_Shop newShop = new FP_Shop();
-        vm.expectRevert(abi.encodeWithSignature("AccessControlUnauthorizedAccount(address,bytes32)", address(this), keccak256("DAO_ROLE")));
+        vm.expectRevert("AccessControlUnauthorizedAccount");
         proxy.upgradeToAndCall(
             address(newShop), 
             ""
         );        
     }
-
 }

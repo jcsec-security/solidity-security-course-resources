@@ -226,7 +226,7 @@ contract Faillapop_proxy_shop_Test is Test {
         assertFalse(success, "Call should revert");
     }
 
-    function test_itemReceived_fromBuyer() public createLegitSale() buyLastItem() {
+    function test_itemReceived_FromBuyer() public createLegitSale() buyLastItem() {
         // confirm item received
         vm.prank(BUYER1);
         bool success = _itemReceived(0);
@@ -258,7 +258,7 @@ contract Faillapop_proxy_shop_Test is Test {
         assertFalse(success, "Call should revert");
     }
 
-    function test_itemReceived_fromSeller() public createLegitSale() buyLastItem() {
+    function test_itemReceived_FromSeller() public createLegitSale() buyLastItem() {
         // block.timestamp manipulation
         (bool success, bytes memory data) = _querySale(0);
         assertTrue(success, "Sale not queried");
@@ -290,7 +290,7 @@ contract Faillapop_proxy_shop_Test is Test {
         assertEq(vault.userLockedBalance(SELLER1), sellerFundsLockedBefore - sale.price, "Wrong locked funds, item received failed");
     }  
 
-    function test_itemReceived_fromSeller_RevertIf_InsufficientElapsedTime() public createLegitSale() buyLastItem() {
+    function test_itemReceived_FromSeller_RevertIf_InsufficientElapsedTime() public createLegitSale() buyLastItem() {
         // block.timestamp manipulation
         (bool success, bytes memory data) = _querySale(0);
         assertTrue(success, "Sale not queried");

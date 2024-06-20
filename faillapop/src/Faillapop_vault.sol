@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0 
 pragma solidity ^0.8.13;
 
-import {IFP_DAO} from "./interfaces/IFP_DAO.sol";
 import {IFP_Shop} from "./interfaces/IFP_Shop.sol";
 import {IFP_Vault} from "./interfaces/IFP_Vault.sol";
 import {AccessControl} from "@openzeppelin/contracts@v5.0.1/access/AccessControl.sol";
@@ -25,6 +24,10 @@ contract FP_Vault is IFP_Vault, AccessControl {
     ///@notice The Shop role ID for the AccessControl contract. At first it's the msg.sender and then the shop.
     bytes32 public constant CONTROL_ROLE = keccak256("CONTROL_ROLE");
 
+    /************************************** Immutables *******************************************************/
+
+    ///@notice address of the NFT contract
+    address public immutable POWERSELLER_NFT_ADDRESS;
 
     /************************************** State vars  *******************************************************/
     
@@ -34,10 +37,6 @@ contract FP_Vault is IFP_Vault, AccessControl {
     mapping (address => uint256) public balance;
     ///@notice The amount of funds locked for selling purposes
     mapping (address => uint256) public lockedFunds;
-    ///@notice address of the NFT contract
-    address public immutable powersellerContract;
-    ///@notice DAO contract
-    IFP_DAO public immutable daoContract;
     ///@notice Maximum claimable amount
     uint256 public maxClaimableAmount;
     ///@notice The amount of rewards claimed by each user
@@ -108,8 +107,7 @@ contract FP_Vault is IFP_Vault, AccessControl {
         _grantRole(DAO_ROLE, dao);
         _grantRole(CONTROL_ROLE, msg.sender);
 
-        powersellerContract = powersellerNFT;
-        daoContract = IFP_DAO(dao);
+        POWERSELLER_NFT_ADDRESS = powersellerNFT;
     }
 
     /**
@@ -190,7 +188,7 @@ contract FP_Vault is IFP_Vault, AccessControl {
      */
     function claimRewards() external {
         // Checks if the user is elegible
-        powersellerContract.call(
+        POWERSELLER_NFT_ADDRESS.call(
             abi.encodeWithSignature(
                 "checkPrivilege(address)",
                 msg.sender
@@ -236,7 +234,7 @@ contract FP_Vault is IFP_Vault, AccessControl {
     function _distributeSlashing(uint256 amount) internal { 
         totalSlashed += amount;
 
-        (bool success, bytes memory data) = powersellerContract.call(
+        (bool success, bytes memory data) = POWERSELLER_NFT_ADDRESS.call(
             abi.encodeWithSignature(
                 "totalPowersellers()"
             )
