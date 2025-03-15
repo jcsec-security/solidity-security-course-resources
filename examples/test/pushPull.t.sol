@@ -38,7 +38,7 @@ contract PPtest is Test  {
         
     }
 
-    function testPull() public {
+    function test_102_1_Pull() public {
         console.log("Pot is %s", target.pot());
         
         vm.prank(alice);
@@ -54,8 +54,8 @@ contract PPtest is Test  {
         assertEq(carol.balance, 10 ether, "Pull failed");
     }
 
-    function testPush() public {
-        //vm.expectRevert(bytes("Transfer failed."));
+    function test_102_1_Push() public {
+        vm.expectRevert(bytes("Transfer failed."));
         target.retrieveAllPush();
     }
 }

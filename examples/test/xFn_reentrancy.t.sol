@@ -45,7 +45,7 @@ contract xFnReenttest is Test  {
         // Create a new attacker contract and craft this failing test yourself :)
     } 
 
-    function test_xFn_reentrancy() public {
+    function test_102_2_xFn_reentrancy() public {
         console.log("Depositting 10 ether from Mallory");
         vm.prank(mallory);
         attacker.exploit{value: 10 ether}();

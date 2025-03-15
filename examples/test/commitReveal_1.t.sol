@@ -26,7 +26,7 @@ contract CRVotingTest is Test  {
  
     }
 
-    function test_voting() public { //@todo replicate this on-chain without the reveal phase
+    function test_102_3_voting() public { //@todo replicate this on-chain without the reveal phase
         vm.warp(0);
 
         console.log("-- Are these hashes... actually secret? --");

@@ -10,8 +10,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 */
 contract Example6_1 is Ownable {
 
-    mapping (address => uint256) balance;
-    mapping (address => uint256) blockstamp;
+    mapping (address depositor => uint256 balance) balance;
+    mapping (address depositor => uint256 last_deposit) blockstamp;
 	
 	constructor() Ownable(msg.sender) {}
 
@@ -24,7 +24,8 @@ contract Example6_1 is Ownable {
 	function withdraw() external {		
 		// Checks
 		require(block.number - blockstamp[msg.sender] > 10,
-			"A cooldown of 10 blocks is required!!");
+			"A cooldown of 10 blocks is required!!"
+		);
 
 		// Effects	
 		uint256 withdrawn = balance[msg.sender];

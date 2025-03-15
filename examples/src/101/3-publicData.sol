@@ -12,7 +12,7 @@ contract Example3 {
 
     uint256 public number;
     string private secret; // Making this private DOES NOT protect it from being read on-chain!
-
+    address public winner;
 
     constructor(string memory _secret) {
         secret = _secret;
@@ -31,6 +31,13 @@ contract Example3 {
 
     function increment() public {
         number++;
+    }
+
+    function isItFive() external {
+        if (number == 5) {
+            winner = msg.sender;
+            number++;       
+        }
     }
 
 }

@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 uint256 constant BATCH = 4;
 
+
 /**
     @notice This contract allows a total of `BATCH` participants to deposit funds and then expose two 
         functions to retrieve the funds. One of them follow the Push pattern, while the other
@@ -81,7 +82,10 @@ contract PullOverPush is Ownable {
 }
 
 
-/************************** Attacker contract ***************************/
+/*****************************************************************************************************/
+/**************************************** Attacker contract ******************************************/
+/*****************************************************************************************************/
+
 
 /**
     @notice This contract is used to exploit the Push pattern of the above contract.

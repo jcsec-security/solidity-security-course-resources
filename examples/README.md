@@ -39,11 +39,10 @@ Here you have multiple small examples of basic security issue of solidity smart 
 
 ## Next steps
 
-The current version is `v0.2`. At the moment I would like to achieve the below in order to upgrade it:
+The current version is `v0.3`. At the moment I would like to achieve the below in order to upgrade it:
 
 :pushpin:`V1.0`
 
-- Unchecked return value example https://swcregistry.io/docs/SWC-104
 - Multiple examples per basic issue
 - Foundry tests of the 101 issues
 - Deploy to testnet and add etherscan links

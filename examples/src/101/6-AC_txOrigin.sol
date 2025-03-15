@@ -11,12 +11,12 @@ pragma solidity ^0.8.13;
 */
 contract Example6_2 {
 
-    mapping (address => uint256) balance;
-    mapping (address => uint256) blockstamp;
-	address owner;
+    mapping (address depositor => uint256 balance) balance;
+    mapping (address depositor => uint256 latest_deposit) blockstamp;
+	address public owner;
 
 
-	///@notice This modifier do not apply AC to the actual caller but to the origin of the transaction
+	///@notice This modifier does not apply AC to the actual caller but to the origin of the transaction
 	modifier onlyOwner() {
 		require(tx.origin == owner, "Only owner can call this function.");
 		_;

@@ -32,11 +32,9 @@ contract VotingContract is Ownable {
     uint256 commitWindow; 
     uint256 revealWindow;
 
-    // Mapping of proposal ID to proposal struct
-    mapping(uint256 => Proposal) public proposals;
     uint256 public proposalCount;
-    // Mapping of user address to proposal ID to commit hash
-    mapping(address => mapping(uint256 => bytes32)) public commits;
+    mapping(uint256 proposalID => Proposal) public proposals;
+    mapping(address committer => mapping(uint256 proposalID => bytes32 commitHash)) public commits;
 
 
     /************************************** Events and modifiers *******************************************************/

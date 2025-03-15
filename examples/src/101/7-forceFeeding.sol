@@ -11,8 +11,8 @@ pragma solidity ^0.8.13;
 */ 
 contract Example7 {
 
-    mapping (address => uint256) balance;
-	uint256 totalDeposit;
+    mapping (address depositor => uint256 balance) balance;
+	uint256 public totalDeposit;
 	
 
 	///@notice We could remove receive() and fallback() to avoid SOME (NOT ALL) ether transfers
@@ -29,7 +29,8 @@ contract Example7 {
 
 	function withdraw() external {		
 		// Consistency check...
-		assert(totalDeposit == address(this).balance); 	// Strict comparison of balance is vulnerable to force feeding Eth 
+		// Strict comparison of balance is vulnerable to force feeding Eth 
+		require(totalDeposit == address(this).balance, "Inconsistent!"); 	
 		totalDeposit -= balance[msg.sender];
 
 		// Effects
@@ -45,7 +46,10 @@ contract Example7 {
 }
 
 
-/************************************** Attacker ************************************************/
+/*****************************************************************************************************/
+/****************************************** Attacker *************************************************/
+/*****************************************************************************************************/
+
 
 contract Attacker {
 	

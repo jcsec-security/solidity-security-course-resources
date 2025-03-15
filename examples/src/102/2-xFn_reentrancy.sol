@@ -13,7 +13,7 @@ import "forge-std/Test.sol";
     @custom:exercise This contract is part of the examples at https://github.com/jcr-security/solidity-security-teaching-resources
  */
 contract xFnReentrancy is ReentrancyGuard {
-    mapping (address => uint256) balance;
+    mapping (address depositor => uint256 balance) balance;
 	
 
     function deposit() external payable {
@@ -47,7 +47,11 @@ contract xFnReentrancy is ReentrancyGuard {
 
 }
 
-/************************** Attacker contract ***************************/
+
+/*****************************************************************************************************/
+/********************************** Attacker contract ************************************************/
+/*****************************************************************************************************/
+
 
 /**
     @notice This contract is used to exploit the xFn reentrancy of the above contract.

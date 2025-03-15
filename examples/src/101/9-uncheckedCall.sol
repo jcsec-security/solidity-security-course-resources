@@ -13,18 +13,19 @@ import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 */
 contract BuyMeNFT is ERC721, ERC721Enumerable {
 
-    IERC20 public immutable uma_tkn;
-    uint256 private _nextTokenId;
+    IERC20 public immutable cat_tkn;
+    uint256 private nextTokenId;
 
     constructor(address tkn) ERC721("Vulnerable", "VNFT") {
-        uma_tkn = IERC20(tkn);
+        cat_tkn = IERC20(tkn);
     }
 
 	function mint() external payable {
-        // Requires 10 UMA tokens to mint an NFT
-		uma_tkn.transferFrom(msg.sender, address(this), 10);
+        // Requires 10 CAT tokens to mint an NFT
+        // ... but we don´t know if it is successful!
+		cat_tkn.transferFrom(msg.sender, address(this), 10);
 
-        uint256 tokenId = _nextTokenId++;		
+        uint256 tokenId = nextTokenId++;		
 		_safeMint(msg.sender, tokenId);
 	}
 

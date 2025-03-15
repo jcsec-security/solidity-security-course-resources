@@ -9,7 +9,7 @@ pragma solidity ^0.8.13;
 */
 contract Example2 {
 
-    mapping (address => uint256) balance;
+    mapping (address depositor => uint256 balance) balance;
 	
     function deposit() external payable {
         balance[msg.sender] += msg.value;
@@ -32,7 +32,10 @@ contract Example2 {
 }
 
 
-/************************* Attacker ****************************************************/
+/*****************************************************************************************************/
+/*************************************** Attacker ****************************************************/
+/*****************************************************************************************************/
+
 
 contract Attacker {
 	

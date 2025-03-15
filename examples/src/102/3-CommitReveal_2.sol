@@ -25,15 +25,13 @@ contract RiddlerContract is Ownable {
     }
 
 
-    // Window in seconds
+    // Windows in seconds
     uint256 commitWindow; 
     uint256 revealWindow;
-    // Mapping of riddle ID to riddle struct
-    mapping(uint256 => Riddle) public riddles;
     uint256 public riddleCount;
-    // Mapping of user address to riddle ID to commit hash
-    mapping(address => mapping(uint256 => bytes32)) public commits;
-    mapping(address => uint256) public points;
+    mapping(uint256 riddleID => Riddle) public riddles;
+    mapping(address commiter => mapping(uint256 riddleID => bytes32 committedHash)) public commits;
+    mapping(address player => uint256 points) public points;
     
 
     /************************************** Events and modifiers *******************************************************/
