@@ -12,7 +12,7 @@ Each of those contracts will have 2-3 security issues for you to find and exploi
 
 :star: Current exercises:
 
-- Vulnerable Bank
+- Vulnerable Investment
 - Vulnerable DAO
 - Vulnerable Shop
 - Vulnerable Vault 

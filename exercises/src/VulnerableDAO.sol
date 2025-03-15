@@ -4,12 +4,11 @@ pragma solidity ^0.8.13;
 
 uint256 constant THRESHOLD = 10;
 
-/** 
-    @notice The contract allows to vote on open disputes. If the dispute is resolved in favor of the buyer,
-    the seller have to refund the buyer. If the dispute is resolved in favor of the seller, the sale is closed.
-    @dev Security review is pending... should we deploy this?
-    @custom:exercise This contract is part of the exercises at https://github.com/jcr-security/solidity-security-teaching-resources
-*/
+ 
+///@notice The contract allows to vote on open disputes. If the dispute is resolved in favor of the buyer,
+/// the seller have to refund the buyer. If the dispute is resolved in favor of the seller, the sale is closed.
+///@dev Security review is pending... should we deploy this?
+///@custom:exercise This contract is part of the exercises at https://github.com/jcr-security/solidity-security-teaching-resources
 contract VulnerableDAO {
 
     /** 
@@ -28,8 +27,7 @@ contract VulnerableDAO {
         uint256 totalVoters;
     }
 
-    // Current disputes, indexed by disputeID
-    mapping(uint256 => Dispute) public disputes;
+    mapping(uint256 disputeId => Dispute) public disputes;
     // Password to access the key functions
     string private password;
 
@@ -73,7 +71,9 @@ contract VulnerableDAO {
         password = newMagicWord;
 
         /*
-        * DAO configuration logic goes here
+        * DAO configuration logic goes here.
+        * Consider this missing piece of code to be correct, do not ponder
+        * about potential lack of validtaion or checks here
         */
 
     }
@@ -87,7 +87,9 @@ contract VulnerableDAO {
     function castVote(uint256 disputeId, bool vote) external {  
 
         /*
-        * DAO vote casting logic goes here
+        * DAO vote casting logic goes here.
+        * Consider this missing piece of code to be correct, do not ponder
+        * about potential lack of validtaion or checks here
         */
 
     }
@@ -107,7 +109,9 @@ contract VulnerableDAO {
     ) external isAuthorized(magicWord) returns (uint256) { 
 
         /*
-        * DAO dispute logic goes here
+        * DAO dispute logic goes here.
+        * Consider this missing piece of code to be correct, do not ponder
+        * about potential lack of validtaion or checks here
         */
 
     }    
@@ -120,7 +124,9 @@ contract VulnerableDAO {
     function endDispute(uint256 disputeId) external {  
 
         /*
-        * DAO dispute logic goes here
+        * DAO dispute logic goes here.
+        * Consider this missing piece of code to be correct, do not ponder
+        * about potential lack of validtaion or checks here
         */
 
     }    
@@ -132,7 +138,9 @@ contract VulnerableDAO {
     function checkLottery(uint256 disputeID) external {     
           
         /*
-        * DAO lottery award logic goes here
+        * DAO lottery award logic goes here.
+        * Consider this missing piece of code to be correct, do not ponder
+        * about potential lack of validtaion or checks here
         */
 
         lotteryNFT(msg.sender);
@@ -159,7 +167,9 @@ contract VulnerableDAO {
         if (randomNumber < THRESHOLD   ) {
 
             /*
-            * Award NFT logic goes here
+            * Award NFT logic goes here.
+            * Consider this missing piece of code to be correct, do not ponder
+            * about potential lack of validtaion or checks here
             */
             
             emit AwardNFT(user);
