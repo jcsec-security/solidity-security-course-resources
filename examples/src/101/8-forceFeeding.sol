@@ -9,7 +9,7 @@ pragma solidity ^0.8.13;
 	@custom:deployed-at ETHERSCAN URL
 	@custom:exercise This contract is part of JC's basic examples at https://github.com/jcr-security/solidity-security-teaching-resources
 */ 
-contract Example7 {
+contract Example8 {
 
     mapping (address depositor => uint256 balance) balance;
 	uint256 public totalDeposit;

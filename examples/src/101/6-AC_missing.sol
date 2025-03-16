@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 	@custom:deployed-at ETHERSCAN URL
 	@custom:exercise This contract is part of JC's basic examples at https://github.com/jcr-security/solidity-security-teaching-resources
 */
-contract Example6_1 is Ownable {
+contract Example6 is Ownable {
 
     mapping (address depositor => uint256 balance) balance;
     mapping (address depositor => uint256 last_deposit) blockstamp;

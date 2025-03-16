@@ -11,7 +11,7 @@ import "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
     @custom:deployed-at ETHERSCAN URL
 	@custom:exercise This contract is part of JC's basic examples at https://github.com/jcr-security/solidity-security-teaching-resources
 */
-contract BuyMeNFT is ERC721, ERC721Enumerable {
+contract Example10 is ERC721, ERC721Enumerable {
 
     IERC20 public immutable cat_tkn;
     uint256 private nextTokenId;
