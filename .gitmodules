@@ -1,0 +1,6 @@
+[submodule "exercises/lib/forge-std"]
+	path = exercises/lib/forge-std
+	url = https://github.com/forge/forge-std
+[submodule "exercises/lib/openzeppelin-contracts"]
+	path = exercises/lib/openzeppelin-contracts
+	url = https://github.com/openzeppelin/openzeppelin-contracts

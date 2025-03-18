@@ -18,7 +18,8 @@ contract Example3 {
         secret = _secret;
     }
 
-
+    // This function performs a privileged action!
+    // We only want specific individuals to be able to use it...
     function setNumber(uint256 newNumber, string memory password) public {
         require(
             keccak256(bytes(password)) == keccak256(bytes(secret)),
@@ -32,6 +33,7 @@ contract Example3 {
     function increment() public {
         number++;
     }
+
 
     function isItFive() external {
         if (number == 5) {
