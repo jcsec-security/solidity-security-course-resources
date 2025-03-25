@@ -21,7 +21,7 @@ contract xFnReenttest is Test  {
 
         target = new xFnReentrancy();
         vm.prank(mallory);
-        attacker = new Attacker();
+        attacker = new Attacker(address(target), mallory);
         vm.label(address(target), "xFnReentrancy_contract");
         vm.label(address(attacker), "Attacker_contract");
 
@@ -46,9 +46,11 @@ contract xFnReenttest is Test  {
     } 
 
     function test_102_2_xFn_reentrancy() public {
-        console.log("Depositting 10 ether from Mallory");
+        console.log("Mallory sends 10 ether to the attacker");
         vm.prank(mallory);
         attacker.exploit{value: 10 ether}();
+        console2.log("Mallorie's deposit in target is %s ETH", target.userBalance(mallory)/1 ether);
+        console2.log("Attacker's deposit in target is %s ETH", target.userBalance(address(attacker))/1 ether);
         assertEq(attacker.totalOwned() , 20 ether, "Exploit failed");
     }
 

