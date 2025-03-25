@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 
 /**
     @dev This contract includes an example of cleartext data considered a secret.
-    @custom:deployed-at ETHERSCAN URL
+    @custom:deployed-at https://sepolia.etherscan.io/address/0xd312426bf550e4729808ced2b277e44c3ddc9b38
     		You can read about Unencrypted data on-chain at https://swcregistry.io/docs/SWC-136
 	@custom:exercise This contract is part of JC's basic examples at https://github.com/jcr-security/solidity-security-teaching-resources    
 */ 
