@@ -30,7 +30,7 @@ contract Faillapop_Proxy_Test is Test {
 
     /************************************** Tests **************************************/  
 
-    function test_setUp() external {
+    function test_setUp() external view {
         assertEq(proxy.DAO_ADDRESS(), address(dao));
         assertEq(proxy.getImplementation(), address(shop));
     }

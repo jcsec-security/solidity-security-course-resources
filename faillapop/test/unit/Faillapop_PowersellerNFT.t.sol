@@ -43,12 +43,12 @@ contract Faillapop_Powerseller_Test is Test {
 
     /************************************** Tests **************************************/
 
-    function test_SetUp() public {
+    function test_SetUp() public view {
         assertEq(powersellerNFT.name(), "Faillapop Powerseller NFT", "Incorrect token name");
         assertEq(powersellerNFT.symbol(), "FPSNFT", "Incorrect token symbol");
     }    
 
-    function test_setShop() public {
+    function test_setShop() public view {
         assertTrue(powersellerNFT.hasRole(bytes32(powersellerNFT.CONTROL_ROLE()), address(proxy)));
     }
 

@@ -45,12 +45,12 @@ contract Faillapop_CoolNFT_Test is Test {
 
     /************************************** Tests **************************************/
 
-    function test_SetUp() public {
+    function test_SetUp() public view {
         assertEq(coolNFT.name(), "Faillapop Cool NFT", "Incorrect token name");
         assertEq(coolNFT.symbol(), "FCNFT", "Incorrect token symbol");
     }    
 
-    function test_setDao() public {
+    function test_setDao() public view {
         assertTrue(coolNFT.hasRole(bytes32(coolNFT.CONTROL_ROLE()), address(dao)));
     }
 
@@ -60,7 +60,7 @@ contract Faillapop_CoolNFT_Test is Test {
         coolNFT.setDAO(address(dao));
     }
 
-    function test_setShop() public {
+    function test_setShop() public view {
         assertTrue(coolNFT.hasRole(bytes32(coolNFT.SHOP_ROLE()), address(proxy)));
     }
 
