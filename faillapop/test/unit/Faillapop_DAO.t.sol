@@ -112,6 +112,7 @@ contract Faillapop_DAO_Test is Test {
     modifier mintAndCommitVote(bool vote, string memory secret) {
         // Mint FP_tokens
         uint amount = 1000;
+        vm.prank(vm.envAddress("DEPLOYER"));
         token.mint(address(USER1), amount);
         assertEq(token.balanceOf(address(USER1)), amount, "Wrong balance");
         
@@ -157,6 +158,7 @@ contract Faillapop_DAO_Test is Test {
 
     modifier mintAndVoteOnProposal(address user, uint256 amount, bool vote) {
         // Mint FP_tokens
+        vm.prank(vm.envAddress("DEPLOYER"));
         token.mint(user, amount);
         assertEq(token.balanceOf(user), amount, "Wrong balance");
         
@@ -170,6 +172,7 @@ contract Faillapop_DAO_Test is Test {
         // Mint FP_tokens and cast enough votes to pass the proposal (proposalQuorum = 500)
         for (uint160 i = 1; i <= 501; i++){
             // Mint FP_tokens
+            vm.prank(vm.envAddress("DEPLOYER"));
             token.mint(address(i), 1000);
             assertEq(token.balanceOf(address(i)), 1000, "Wrong balance");
             
@@ -194,7 +197,7 @@ contract Faillapop_DAO_Test is Test {
 
     /************************************** Tests **************************************/
 
-    function test_setShop() public {
+    function test_setShop() public view {
         assertTrue(dao.hasRole(bytes32(dao.CONTROL_ROLE()), address(proxy)));
         assertEq(address(dao.shopAddress()), address(proxy));
     }   
@@ -405,6 +408,7 @@ contract Faillapop_DAO_Test is Test {
 
     function test_checkLottery_RevertIf_UserHasVotedToTheWrongSide() public createLegitSale() buyLastItem() disputeSale() replyDisputedSale() mintAndCommitVote(true, "secret") {
         uint amount2 = 130;
+        vm.prank(vm.envAddress("DEPLOYER"));
         token.mint(address(USER2), amount2);
         
         bytes32 commit = keccak256(abi.encodePacked(false, "secret"));
@@ -518,6 +522,7 @@ contract Faillapop_DAO_Test is Test {
     function test_castVoteOnProposal_RevertIf_ReviewTimeHasNotElapsed() public createUpgradeProposal() {
         // Mint FP_tokens
         uint amount = 1000;
+        vm.prank(vm.envAddress("DEPLOYER"));
         token.mint(address(USER1), amount);
         assertEq(token.balanceOf(address(USER1)), amount, "Wrong balance");
         
@@ -538,6 +543,7 @@ contract Faillapop_DAO_Test is Test {
     function test_castVoteOnProposal_RevertIf_ProposalIsNotActive() public {
         // Mint FP_tokens
         uint amount = 1000;
+        vm.prank(vm.envAddress("DEPLOYER"));
         token.mint(address(USER1), amount);
         assertEq(token.balanceOf(address(USER1)), amount, "Wrong balance");
         

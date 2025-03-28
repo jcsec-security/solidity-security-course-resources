@@ -54,7 +54,7 @@ contract Faillapop_vault_Test is Test {
 
     /************************************** Tests **************************************/ 
 
-    function test_setShop() public {
+    function test_setShop() public view {
         assertTrue(vault.hasRole(keccak256("CONTROL_ROLE"), address(proxy)));
     }
 

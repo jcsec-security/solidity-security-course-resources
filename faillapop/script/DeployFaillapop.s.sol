@@ -13,7 +13,7 @@ import {FP_Proxy} from "../src/Faillapop_Proxy.sol";
 contract DeployFaillapop is Script {
 
     function run() external returns(FP_Shop shop, FP_Token token, FP_CoolNFT coolNFT, FP_PowersellerNFT powersellerNFT, FP_DAO dao, FP_Vault vault, FP_Proxy proxy) {
-        vm.startBroadcast(msg.sender);
+        vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
         shop = new FP_Shop();
         token = new FP_Token();
         coolNFT = new FP_CoolNFT();
