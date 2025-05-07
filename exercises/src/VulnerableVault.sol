@@ -78,9 +78,9 @@ contract VulnerableVault {
     ///@param user affected user
     ///@param amount The amount of funds to unlock 
     function unlockFunds(address user, uint256 amount) external onlyShop() {
-        require(lockedFunds[msg.sender] >= amount, "Not enough locked funds");
-        lockedFunds[msg.sender] -= amount;
-        balance[msg.sender] += amount;
+        require(lockedFunds[user] >= amount, "Not enough locked funds");
+        lockedFunds[user] -= amount;
+        balance[user] += amount;
 
         emit unlockedFunds(user, amount);
     }
