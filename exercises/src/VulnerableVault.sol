@@ -29,7 +29,7 @@ contract VulnerableVault {
     ///@notice Check if the user has enough unlocked funds staked
     modifier enoughUnlocked(uint256 amount) {
 		require(
-            (balance[msg.sender] - amount) > 0,
+            (balance[msg.sender] - amount) >= 0,
             "Amount cannot be unstaked"
         );
         _;
