@@ -36,7 +36,7 @@ contract VulnerableShop is Ownable {
     ///@param buyer The address of the buyer, if any
     ///@param title The title of the item being sold
     ///@param description A description of the item being sold
-    ///@param price The price in Ether of the item being sold
+    ///@param price The price in Token of the item being sold
     ///@param state The current state of the sale
     struct Sale {
         address seller;
@@ -87,8 +87,8 @@ contract VulnerableShop is Ownable {
 
     ///@notice Endpoint to buy an item
     ///@param itemId The ID of the item being bought
-    ///@dev The user must send the exact amount of Ether to buy the item
-    function doBuy(uint256 itemId) external payable {
+    ///@dev The user must send the exact amount of Token to buy the item
+    function doBuy(uint256 itemId) external {
         require(offered_items[itemId].state == State.Selling, "ItemId cannot be bought");
   
         /*
@@ -105,7 +105,7 @@ contract VulnerableShop is Ownable {
     /// price amount can be locked to desincentivice malicious behavior
     ///@param title The title of the item being sold
     ///@param description A description of the item being sold
-    ///@param price The price in Ether of the item being sold
+    ///@param price The price in Token of the item being sold
     function newSale(string calldata title, string calldata description, uint256 price) external {
         // Assigns the initial value and adds one to offerIndex
         uint256 itemId = offerIndex++;
