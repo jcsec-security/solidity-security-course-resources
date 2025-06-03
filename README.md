@@ -1,14 +1,13 @@
-> [!WARNING]
-> The code has been made vulnerable on purpose. Please do not deploy or reuse this codebase in a live environment.
-
----
-
-# Mock audit exercise!
+# Faillapop - Solidity mock audit environment!
 
 We sometimes feel that the jump between being able to identify issues in small snippets of code and auditing a more complex codebase is problematic. There are a loooot of small CTF-like exercises, some easy some really difficult, but feel like there is a lack of a "mock audit contract" for people to practice their skills in a closer to real-life project. 
 
 So we decided to create the Faillapop protocol!
 
+> [!WARNING]
+> The code has been made vulnerable on purpose. Please do not deploy or reuse this codebase in a live environment.
+
+---
 
 ## The Faillapop protocol 🛍️
 
