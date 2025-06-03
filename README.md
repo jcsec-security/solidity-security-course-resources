@@ -89,15 +89,7 @@ git clone https://github.com/jcsec-security/faillapop.git
 cd faillapop
 ```
 
-Install dependencies using Foundry:
-
-```shell
-forge install foundry-rs/forge-std --no-commit
-forge install OpenZeppelin/openzeppelin-contracts --no-commit
-forge install OpenZeppelin/openzeppelin-contracts-upgradeable --no-commit
-```
-
-Build the project using Foundry:
+Install dependencies and compile the project using Foundry:
 
 ```shell
 forge build
