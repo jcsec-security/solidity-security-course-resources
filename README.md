@@ -5,9 +5,9 @@
 
 # Mock audit exercise!
 
-I sometimes feel that the jump between being able to identify issues in small snippets of code and auditing a more complex codebase is problematic. There are a loooot of small CTF-like exercises, some easy some really difficult, but feel like there is a lack of a "mock audit contract" for people to practice their skills in a closer to real-life project. 
+We sometimes feel that the jump between being able to identify issues in small snippets of code and auditing a more complex codebase is problematic. There are a loooot of small CTF-like exercises, some easy some really difficult, but feel like there is a lack of a "mock audit contract" for people to practice their skills in a closer to real-life project. 
 
-So I decided to create the Faillapop protocol!
+So we decided to create the Faillapop protocol!
 
 
 ## The Faillapop protocol 🛍️
@@ -28,24 +28,6 @@ Solutions are not provided along this repo but the documentation has been create
 
 > [!TIP]
 > Do not forget to run and analyze the testing suite. Sometimes you can spot vulnerabilities just by checking the bits that were neglected during testing and ensuring they behave as expected, or just reviewing failed tests.
-
-## Next steps
-
-The current version is `v1.0`. At the moment I would like to achieve the below in order to upgrade it:
-
-
-:pushpin:`V2.0`
-
-- Oracle
-- Flash loan provider
-
-## Collaboration
-
-On September 2023 the [NICS lab](https://www.nics.uma.es/) research group from the [University of Malaga](https://www.uma.es/) agreed to help improving this repository as part of their efforts on Open Source collaboration. In particular, with new versions of the Faillapop mock-audit environment, both improving the initial codebase and extending its features.
-
-> [!IMPORTANT]  
-> Special thanks to Marco Lopez ([TW](https://twitter.com/Marcologonz), [LD](https://linkedin.com/in/marcologonz)) who took on this workload as part of his dissertation and to NICS Lab's researcher Isaac Agudo who supported and pushed for the initiative to come to success.
-
 
 ## Working with the Faillapop Protocol 🛠️
 
@@ -135,12 +117,29 @@ This will run all the tests in the `tests` directory.
 
 For further documentation on the protocol --> [Faillapop Documentation](./docs/README.md)
 
+
+## Next steps
+
+The current version is `v1.0`. At the moment we would like to achieve the below in order to upgrade it:
+
+
+:pushpin:`V2.0`
+
+- Oracle
+- Flash loan provider
+
 ## Contribution and Contact
 
-I encourage you to make the most of this material. If you find it useful, feel free to share by linking to this repository. Your feedback is invaluable! If you have suggestions, corrections, or would like to contribute in any way, please don't hesitate to reach out:
+We encourage you to make the most of this material. If you find it useful, feel free to share by linking to this repository. Your feedback is invaluable! If you have suggestions, corrections, or would like to contribute in any way, please don't hesitate to reach out:
 
 - Telegram: @jcr_auditor
 - Email:  jc@jcsec.io
 
 Thank you for exploring this repository, and happy bug hunting!
 
+## Collaboration
+
+On September 2023 the [NICS lab](https://www.nics.uma.es/) research group from the [University of Malaga](https://www.uma.es/) agreed to help improving this repository as part of their efforts on Open Source collaboration. In particular, with new versions of the Faillapop mock-audit environment, both improving the initial codebase and extending its features.
+
+> [!IMPORTANT]  
+> Special thanks to Marco Lopez ([TW](https://twitter.com/Marcologonz), [LD](https://linkedin.com/in/marcologonz)) who took on this workload as part of his dissertation and to NICS Lab's researcher Isaac Agudo who supported and pushed for the initiative to come to success.
