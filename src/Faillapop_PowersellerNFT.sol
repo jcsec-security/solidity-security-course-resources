@@ -30,12 +30,7 @@ contract FP_PowersellerNFT is IFP_PowersellerNFT, ERC721, AccessControl {
     ///@notice Mapping from user address to tokenId
     mapping (address => uint256) public tokenIds;
 
-    /************************************** Events and modifiers *****************************************************/
-
-    ///@notice Emitted when a user loses a PowerSeller badge
-    event PowersellerNFT_Removed(address indexed owner, uint256 tokenId);
-    ///@notice Emitted when a user receives a PowerSeller badge
-    event PowersellerNFT_Minted(address indexed owner, uint256 tokenId);	
+    /************************************** Modifiers *****************************************************/
 
     /**
         @notice Modifier to check if the Shop address has been set

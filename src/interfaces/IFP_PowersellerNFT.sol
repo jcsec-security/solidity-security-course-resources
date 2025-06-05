@@ -9,6 +9,17 @@ pragma solidity ^0.8.13;
     @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/solidity-security-teaching-resources
 */
 interface IFP_PowersellerNFT { 
+
+    /************************************** Events *****************************************************/
+
+    ///@notice Emitted when a user loses a PowerSeller badge
+    event PowersellerNFT_Removed(address indexed owner, uint256 tokenId);
+    ///@notice Emitted when a user receives a PowerSeller badge
+    event PowersellerNFT_Minted(address indexed owner, uint256 tokenId);	
+
+
+    /************************************** Functions  *****************************************************/
+    
     /**
         @notice Sets the shop address as the new Control role
         @param shopAddress The address of the shop contract

@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0 
-
 pragma solidity ^0.8.13;
 
 
@@ -12,6 +11,79 @@ pragma solidity ^0.8.13;
     @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/solidity-security-teaching-resources
 */
 interface IFP_Shop {
+    /************************************** Enum and structs *******************************************************/
+
+    /**
+        @dev A Sale can be in one of three states: 
+        `Selling` deal still active
+        `Disputed` the buyer submitted a claim
+        `Pending` waiting buyer confirmation
+        `Sold` deal is over, no claim was submitted
+        `Vacation` the seller is on vacation, sale halted
+    */
+    enum State {
+        Undefined,
+        Selling,
+        Pending,
+        Disputed,
+        Sold,
+        Vacation
+    }
+
+    /**
+        @dev A Sale struct represent each of the active sales in the shop.
+        @param seller The address of the seller
+        @param buyer The address of the buyer, if any
+        @param title The title of the item being sold
+        @param description A description of the item being sold
+        @param price The price in Ether of the item being sold
+        @param state The current state of the sale
+     */
+    struct Sale {
+        address seller;
+        address buyer;
+        string title;
+        string description; 
+        uint256 price;
+        State state;
+        uint256 buyTimestamp;
+    }  
+
+    /**
+        @dev A Dispute struct represent each of the active disputes in the shop.
+        @param itemId The ID of the item being disputed
+        @param disputeTimestamp The timestamp of the dispute
+        @param buyerReasoning The reasoning of the buyer for the claim
+        @param sellerReasoning The reasoning of the seller against the claim
+     */
+    struct Dispute {
+        uint256 disputeId;
+        uint256 disputeTimestamp;
+        string buyerReasoning;
+        string sellerReasoning;
+    }  
+
+
+    /************************************** Events *****************************************************/
+    
+    ///@notice Emitted when a user buys an item, contains the user address and the item ID
+    event Buy(address user, uint256 item);
+    ///@notice Emitted when a user creates a new sale, contains the item ID and the title of the item
+    event NewItem(uint256 id, string title);
+    ///@notice Emitted when a user modifies a sale, contains the item ID and the title of the item
+    event ModifyItem(uint256 id, string title);
+    ///@notice Emitted when a user disputes a sale, contains the user address and the item ID
+    event OpenDispute(address user, uint256 item);
+    ///@notice Emitted when a user received a refund, contains the user address and the amount
+    event Reimburse(address user, uint256 amount);
+    ///@notice Emitted when a user receives an reward NFT, contains the user address
+    event AwardNFT(address user);
+    ///@notice Emitted when a user is blacklisted, contains the user address
+    event BlacklistSeller(address seller);
+
+
+    /************************************** Functions *****************************************************/
+
     /**
         @notice Initializer of the contract
         @param daoAddress The address of the DAO contract

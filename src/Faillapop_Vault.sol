@@ -45,21 +45,7 @@ contract FP_Vault is IFP_Vault, AccessControl {
     uint256 public totalSlashed;
 
 
-    /************************************** Events and modifiers *****************************************************/
-
-    ///@notice Emitted when a user stakes funds, contains the user address and the amount staked
-    event Stake(address user, uint256 amount);
-    ///@notice Emitted when a user unstakes funds, contains the user address and the amount unstaked
-    event Unstake(address user, uint256 amount);
-    ///@notice Emitted when a user funds get locked, contains the user address and the amount locked
-    event Locked(address user, uint256 amount);
-    ///@notice Emitted when a user funds get unlocked, contains the user address and the amount unlocked
-    event Unlocked(address user, uint256 amount);
-    ///@notice Emitted when a user funds get slashed, contains the user address and the amount slashed
-    event Slashed(address user, uint256 amount);
-    ///@notice Emitted when a user claims rewards, contains the user address and the amount claimed
-    event RewardsClaimed(address user, uint256 amount);
-
+    /************************************** Modifiers *****************************************************/
 
     /** 
         @notice Check if the user has enough staked funds to lock or unstake
