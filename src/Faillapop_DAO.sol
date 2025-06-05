@@ -14,7 +14,7 @@ import {IERC20} from "@openzeppelin/contracts@v5.0.1/token/ERC20/IERC20.sol";
     @notice The contract allows to vote with FPT tokens on open disputes. If the dispute is resolved in favor of the buyer,
         the seller have to refund the buyer. If the dispute is resolved in favor of the seller, the sale is closed.
     @dev Security review is pending... should we deploy this?
-    @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/solidity-security-teaching-resources
+    @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/faillapop
 */
 contract FP_DAO is IFP_DAO, AccessControl {
 

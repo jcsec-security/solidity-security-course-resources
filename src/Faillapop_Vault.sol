@@ -7,13 +7,13 @@ import {AccessControl} from "@openzeppelin/contracts@v5.0.1/access/AccessControl
 
 
 /** 
-    @title FaillaPop vault [v0.2]
+    @title FaillaPop vault
     @author Faillapop team :D 
     @notice The contract allows anyone to stake and unstake Ether. When a seller publishes a new item
         in the shop, the funds are locked during the selling process. Then, If the user is considered malicious,
         the funds are slashed. 
     @dev Security review is pending... should we deploy this?
-    @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/solidity-security-teaching-resources
+    @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/faillapop
 */
 contract FP_Vault is IFP_Vault, AccessControl {
 

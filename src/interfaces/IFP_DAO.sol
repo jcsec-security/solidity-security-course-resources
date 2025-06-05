@@ -6,7 +6,7 @@ pragma solidity ^0.8.13;
     @author Faillapop team :D 
     @notice The contract allow to vote with FPT tokens on open disputes. If the dispute is resolved in favor of the buyer,
     the seller have to refund the buyer. If the dispute is resolved in favor of the seller, the sale is closed.
-    @custom:ctf This contract is of JC's mock-audit exercise at https://github.com/jcr-security/solidity-security-teaching-resources
+    @custom:ctf This contract is of JC's mock-audit exercise at https://github.com/jcr-security/faillapop
 */
 interface IFP_DAO {
 

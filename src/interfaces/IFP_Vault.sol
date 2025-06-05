@@ -8,7 +8,7 @@ pragma solidity ^0.8.13;
     @notice The contract allows anyone to stake and unstake Ether. When a seller publish a new item
     in the shop, the funds are locked during the sale. If the user is considered malicious
     by the DAO, the funds are slashed. 
-    @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/solidity-security-teaching-resources
+    @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/faillapop
 */
 interface IFP_Vault {
     

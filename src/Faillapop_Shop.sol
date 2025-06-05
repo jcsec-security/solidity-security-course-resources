@@ -15,7 +15,7 @@ import {Initializable} from "@openzeppelin-upgradeable/contracts@v5.0.1/proxy/ut
     @notice The contract allows anyone to sell and buy goods in a decentralized manner! The seller has to lock funds to avoid malicious behaviour.
         In addition, unhappy buyers can open a claim and the DAO will decide if the seller misbehaved or not.
     @dev Security review is pending... should we deploy this?
-    @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/solidity-security-teaching-resources
+    @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/faillapop
 */
 contract FP_Shop is IFP_Shop, AccessControlUpgradeable  {
 
