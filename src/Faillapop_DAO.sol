@@ -14,78 +14,9 @@ import {IERC20} from "@openzeppelin/contracts@v5.0.1/token/ERC20/IERC20.sol";
     @notice The contract allows to vote with FPT tokens on open disputes. If the dispute is resolved in favor of the buyer,
         the seller have to refund the buyer. If the dispute is resolved in favor of the seller, the sale is closed.
     @dev Security review is pending... should we deploy this?
-    @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/solidity-security-teaching-resources
+    @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/faillapop
 */
 contract FP_DAO is IFP_DAO, AccessControl {
-    
-    /************************************** Enums & Structs *******************************************************/
-
-    /** 
-        @notice The DisputeState enum is used to record the state of a dispute
-        @dev NOT_ACTIVE is the default value, COMMITTING_PHASE is the state in which users are committing their secret vote, REVEALING_PHASE is the state in which users are revealing their vote
-     */
-    enum DisputeState {
-        NOT_ACTIVE,
-        COMMITTING_PHASE,
-        REVEALING_PHASE
-    }
-
-    /** 
-        @notice The ProposalState enum is used to record the state of a proposal
-        @dev NOT_ACTIVE is the default value, ACTIVE is the state of an existing proposal, PASSED is the state of a proposal that has been voted and passed but not yet executed
-     */
-    enum ProposalState {
-        NOT_ACTIVE,
-        ACTIVE,
-        PASSED
-    }
-
-    /**
-        @notice The Vote enum is used to record the vote of a user
-        @dev DIDNT_VOTE is the default value, COMMITTED is the first phase, FOR and AGAINST are the possible votes
-     */
-    enum Vote {
-        DIDNT_VOTE,
-        COMMITTED,
-        FOR,
-        AGAINST
-    }
-    
-    /** 
-        @notice A Dispute includes the itemId, the reasoning of the buyer and the seller on the claim,
-        and the number of votes for and against the dispute.
-        @dev A Dispute is always written from the POV of the buyer
-            - FOR is in favor of the buyer claim
-            - AGAINST is in favor of the seller claim
-     */
-    struct Dispute {
-        uint256 itemId;
-        string buyerReasoning;
-        string sellerReasoning;
-        uint256 votesFor;
-        uint256 votesAgainst;
-        uint256 totalVoters;
-        uint256 committingStartingTime;
-        uint256 revealingStartingTime;
-        DisputeState state;
-    }
-
-    /** 
-        @notice An UpgradeProposal includes the address of the creator, the id, the creationTimestamp, the new contract address, 
-        the number of votes for and against the proposal, the total number of voters and the status of the proposal.
-        @dev newShop is the address of the new contract which can be checked on etherscan
-     */
-    struct UpgradeProposal {
-        address creator;
-        uint256 id;
-        uint256 creationTimestamp;
-        uint256 approvalTimestamp;
-        address newShop;
-        uint256 votesFor;
-        uint256 votesAgainst;
-        uint256 totalVoters;
-        ProposalState state;
-    }
 
     /************************************** Constants *******************************************************/
 
@@ -160,34 +91,7 @@ contract FP_DAO is IFP_DAO, AccessControl {
     error ZeroAddress();
 
 
-    /************************************** Events and modifiers *****************************************************/
-
-    ///@notice Emitted when the contract configuration is changed, contains the address of the Shop
-    event NewConfig(address shop, address nft);
-    ///@notice Emitted when a user commits the hash of his vote, contains the disputeId and the user address 
-    event DisputeVoteCommitted(uint disputeId, address user);
-    ///@notice Emitted when a user votes, contains the disputeId and the user address
-    event DisputeVoteCasted(uint256 disputeId, address user);
-    ///@notice Emitted when a new dispute is created, contains the disputeId and the itemId
-    event NewDispute(uint256 disputeId, uint256 itemId);
-    ///@notice Emitted when a dispute is closed, contains the disputeId and the itemId
-    event EndDispute(uint256 disputeId, uint256 itemId);
-    ///@notice Emitted when a user is awarder a cool NFT, contains the user address
-    event AwardNFT(address user);
-
-    ///@notice Emitted when a new upgrade proposal is created, contains the proposalId, the creationTimestamp and the new contract address
-    event NewUpgradeProposal(uint256 id, uint256 creationTimestamp, address newShop);
-    ///@notice Emitted when a user votes on an upgrade proposal, contains the proposalId and the user address
-    event ProposalVoteCasted(uint256 proposalId, address user);
-    ///@notice Emitted when an upgrade proposal is passed, contains the proposalId, the new contract address and the timestamp
-    event ProposalPassed(uint256 proposalId, address newShop, uint256 approvalTimestamp);
-    ///@notice Emitted when an upgrade proposal is not passed because not enough users voted in favor, contains the proposalId and the new contract address 
-    event ProposalNotPassed(uint256 proposalId, address newShop);
-    ///@notice Emitted when an upgrade proposal is executed, contains the proposalId and the new contract address
-    event ProposalExecuted(uint256 proposalId, address newShop);
-    ///@notice Emitted when an upgrade proposal is canceled, contains the proposalId
-    event ProposalCanceled(uint256 proposalId);
-
+    /************************************** Modifiers *****************************************************/
 
     /**
         @notice Check if the caller is authorized to access key features

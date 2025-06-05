@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0 
-
 pragma solidity ^0.8.13;
 
 
@@ -9,9 +8,27 @@ pragma solidity ^0.8.13;
     @notice The contract allows anyone to stake and unstake Ether. When a seller publish a new item
     in the shop, the funds are locked during the sale. If the user is considered malicious
     by the DAO, the funds are slashed. 
-    @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/solidity-security-teaching-resources
+    @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/faillapop
 */
 interface IFP_Vault {
+    
+    /************************************** Events *****************************************************/
+
+    ///@notice Emitted when a user stakes funds, contains the user address and the amount staked
+    event Stake(address user, uint256 amount);
+    ///@notice Emitted when a user unstakes funds, contains the user address and the amount unstaked
+    event Unstake(address user, uint256 amount);
+    ///@notice Emitted when a user funds get locked, contains the user address and the amount locked
+    event Locked(address user, uint256 amount);
+    ///@notice Emitted when a user funds get unlocked, contains the user address and the amount unlocked
+    event Unlocked(address user, uint256 amount);
+    ///@notice Emitted when a user funds get slashed, contains the user address and the amount slashed
+    event Slashed(address user, uint256 amount);
+    ///@notice Emitted when a user claims rewards, contains the user address and the amount claimed
+    event RewardsClaimed(address user, uint256 amount);
+
+
+    /************************************** Functions *****************************************************/
 
     /**
         @notice Sets the shop address as the new Control role
