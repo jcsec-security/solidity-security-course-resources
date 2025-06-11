@@ -12,7 +12,12 @@ import {FP_Proxy} from "../../src/FP_Proxy.sol";
 import {DeployFaillapop} from "../../script/DeployFaillapop.s.sol";
 
 contract FP_Vault_Test is Test {
+    address public constant SELLER1 = address(bytes20("SELLER1"));
+    address public constant SELLER2 = address(bytes20("SELLER2"));
+    address public constant USER1 = address(bytes20("USER1"));
+    address public constant BUYER1 = address(bytes20("BUYER1"));
 
+    address public deployer;
     FP_Shop public shop;
     FP_Vault public vault;
     FP_DAO public dao;
@@ -20,11 +25,6 @@ contract FP_Vault_Test is Test {
     FP_CoolNFT public coolNFT;
     FP_PowersellerNFT public powersellerNFT;
     FP_Proxy public proxy;
-
-    address public constant SELLER1 = address(1);
-    address public constant SELLER2 = address(2);
-    address public constant USER1 = address(3);
-    address public constant BUYER1 = address(4);
 
     /************************************* Modifiers *************************************/
 
@@ -50,6 +50,7 @@ contract FP_Vault_Test is Test {
 
         DeployFaillapop deploy = new DeployFaillapop();
         (shop, token, coolNFT, powersellerNFT, dao, vault, proxy) = deploy.run();
+        deployer = deploy.deployer();
     }
 
     /************************************** Tests **************************************/ 
@@ -273,6 +274,7 @@ contract FP_Vault_Test is Test {
             );
             require(success7, "Offer index not retrieved");
             uint256 maliciousSaleId = abi.decode(data2, (uint256)) - 1;
+        vm.prank(deployer);
         (bool success8, ) = address(proxy).call(
             abi.encodeWithSignature(
                 "removeMaliciousSale(uint256)",
@@ -285,7 +287,5 @@ contract FP_Vault_Test is Test {
         vault.claimRewards();
 
         assertEq(vault.rewardsClaimed(SELLER1), vault.maxClaimableAmount(), "Seller should have claimed the max amount");   
-
     }
-
 }

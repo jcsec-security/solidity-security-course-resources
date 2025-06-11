@@ -19,7 +19,12 @@ import {FP_Vault} from "../../src/FP_Vault.sol";
  *      and scrutinize the internal logic of the shop without the involvement of the proxy.
  */
 
-contract Faillapop_Shop_Test is Test {
+contract FP_Shop_Test is Test {
+    ///@notice The maximum time that a dispute can be kept waiting for a seller's reply
+    uint256 public constant MAX_DISPUTE_WAITING_FOR_REPLY = 15 days;
+    address public constant SELLER1 = address(bytes20("SELLER1"));
+    address public constant BUYER1 = address(bytes20("BUYER1"));
+    address public constant USER1 = address(bytes20("USER1"));
 
     FP_Shop public shop;
     FP_Vault public vault;
@@ -27,13 +32,6 @@ contract Faillapop_Shop_Test is Test {
     FP_Token public token;
     FP_CoolNFT public coolNFT;
     FP_PowersellerNFT public powersellerNFT;
-
-    ///@notice The maximum time that a dispute can be kept waiting for a seller's reply
-    uint256 public constant MAX_DISPUTE_WAITING_FOR_REPLY = 15 days;
-
-    address public constant SELLER1 = address(3);
-    address public constant BUYER1 = address(4);
-    address public constant USER1 = address(5);
 
     /************************************* Modifiers *************************************/
 
@@ -115,6 +113,7 @@ contract Faillapop_Shop_Test is Test {
         vault.setShop(address(shop));
         dao.setShop(address(shop));
         powersellerNFT.setShop(address(shop));
+        coolNFT.setShop(address(shop));
         coolNFT.setDAO(address(dao));
     }
 

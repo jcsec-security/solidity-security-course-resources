@@ -11,8 +11,7 @@ import {FP_Vault} from "../../src/FP_Vault.sol";
 import {FP_Proxy} from "../../src/FP_Proxy.sol";
 import {DeployFaillapop} from "../../script/DeployFaillapop.s.sol";
 
-contract Faillapop_Proxy_Test is Test {
-
+contract FP_Proxy_Test is Test {
     FP_Shop public shop;
     FP_Vault public vault;
     FP_DAO public dao;

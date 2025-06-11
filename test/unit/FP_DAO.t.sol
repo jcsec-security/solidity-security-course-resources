@@ -12,7 +12,7 @@ import {FP_Vault} from "../../src/FP_Vault.sol";
 import {FP_Proxy} from "../../src/FP_Proxy.sol";
 import {DeployFaillapop} from "../../script/DeployFaillapop.s.sol";
 
-contract Faillapop_DAO_Test is Test {
+contract FP_DAO_Test is Test {
     ///@notice The time window in which a proposal can not be voted
     uint256 public constant PROPOSAL_REVIEW_TIME = 1 days;
     ///@notice The minimum voting period for a proposal
@@ -25,6 +25,10 @@ contract Faillapop_DAO_Test is Test {
     uint256 constant MIN_REVEALING_TIME = 1 days;
     ///@notice The maximum revealing period for votes on a dispute
     uint256 constant MAX_REVEALING_TIME = 3 days;
+    address public constant USER1 = address(bytes20("USER1"));
+    address public constant USER2 = address(bytes20("USER2"));
+    address public constant SELLER1 = address(bytes20("SELLER1"));
+    address public constant BUYER1 = address(bytes20("BUYER1"));
 
     FP_Shop public shop;
     FP_Vault public vault;
@@ -33,11 +37,6 @@ contract Faillapop_DAO_Test is Test {
     FP_CoolNFT public coolNFT;
     FP_PowersellerNFT public powersellerNFT;
     FP_Proxy public proxy;
-
-    address public constant USER1 = address(1);
-    address public constant USER2 = address(2);
-    address public constant SELLER1 = address(3);
-    address public constant BUYER1 = address(4);
 
     /************************************* Modifiers *************************************/
 

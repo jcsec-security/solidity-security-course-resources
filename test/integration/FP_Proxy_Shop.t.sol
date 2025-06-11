@@ -12,8 +12,12 @@ import {FP_Vault} from "../../src/FP_Vault.sol";
 import {FP_Proxy} from "../../src/FP_Proxy.sol";
 import {DeployFaillapop} from "../../script/DeployFaillapop.s.sol";
 
-contract Faillapop_proxy_shop_Test is Test {
+contract FP_Proxy_Shop_Test is Test {
+    address public constant SELLER1 = address(bytes20("SELLER1"));
+    address public constant BUYER1 = address(bytes20("BUYER1"));
+    address public constant USER1 = address(bytes20("USER1"));
 
+    address public deployer;
     FP_Shop public shop;
     FP_Vault public vault;
     FP_DAO public dao;
@@ -21,10 +25,6 @@ contract Faillapop_proxy_shop_Test is Test {
     FP_CoolNFT public coolNFT;
     FP_PowersellerNFT public powersellerNFT;
     FP_Proxy public proxy;
-
-    address public constant SELLER1 = address(3);
-    address public constant BUYER1 = address(4);
-    address public constant USER1 = address(5);
 
     /************************************* Modifiers *************************************/
 
@@ -113,6 +113,7 @@ contract Faillapop_proxy_shop_Test is Test {
 
         DeployFaillapop deploy = new DeployFaillapop();
         (shop, token, coolNFT, powersellerNFT, dao, vault, proxy) = deploy.run();
+        deployer = deploy.deployer();
     }
 
     /************************************** Tests **************************************/  
@@ -959,6 +960,7 @@ contract Faillapop_proxy_shop_Test is Test {
 
     function test_removeMaliciousSale() public createLegitSale() {
         // Remove malicious sale
+        vm.prank(deployer);
         bool success = _removeMaliciousSale(0); 
         assertTrue(success, "Malicious sale not removed correctly");
 
@@ -1025,7 +1027,8 @@ contract Faillapop_proxy_shop_Test is Test {
             uint256 maliciousSaleId = abi.decode(data2, (uint256)) - 1;
         
         // Remove malicious sale
-        bool success8 = _removeMaliciousSale(0); 
+        vm.prank(deployer);
+        bool success8 = _removeMaliciousSale(maliciousSaleId); 
         assertTrue(success8, "Malicious sale not removed correctly");
 
         // Check sale cancellation

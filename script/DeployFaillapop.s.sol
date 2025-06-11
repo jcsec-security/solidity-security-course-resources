@@ -11,9 +11,10 @@ import {FP_Vault} from "../src/FP_Vault.sol";
 import {FP_Proxy} from "../src/FP_Proxy.sol";
 
 contract DeployFaillapop is Script {
-
+    address public deployer;
     function run() external returns(FP_Shop shop, FP_Token token, FP_CoolNFT coolNFT, FP_PowersellerNFT powersellerNFT, FP_DAO dao, FP_Vault vault, FP_Proxy proxy) {
-        vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
+        deployer = vm.addr(vm.envUint("PRIVATE_KEY"));
+        vm.startBroadcast(deployer);
         shop = new FP_Shop();
         token = new FP_Token();
         coolNFT = new FP_CoolNFT();

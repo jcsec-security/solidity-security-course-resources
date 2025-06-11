@@ -11,8 +11,10 @@ import {FP_Vault} from "../../src/FP_Vault.sol";
 import {FP_Proxy} from "../../src/FP_Proxy.sol";
 import {DeployFaillapop} from "../../script/DeployFaillapop.s.sol";
 
-contract Faillapop_CoolNFT_Test is Test {
-    
+contract FP_CoolNFT_Test is Test {
+    address public constant USER1 = address(bytes20("USER1"));
+    address public constant USER2 = address(bytes20("USER2"));
+
     FP_CoolNFT public coolNFT;
     FP_DAO public dao;
     FP_Token public token;     
@@ -20,9 +22,6 @@ contract Faillapop_CoolNFT_Test is Test {
     FP_Shop public shop;
     FP_PowersellerNFT public powersellerNFT;
     FP_Proxy public proxy;
-
-    address public constant USER1 = address(0x1);
-    address public constant USER2 = address(0x2);
 
     /************************************** Modifiers **************************************/
 
