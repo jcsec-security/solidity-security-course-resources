@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {FP_Token} from "../../src/Faillapop_ERC20.sol";
+import {FP_Token} from "../../src/FP_Token.sol";
 
 contract Faillapop_ERC20_Test is Test {
     
