@@ -2,16 +2,16 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {FP_CoolNFT} from "../../src/Faillapop_CoolNFT.sol";
-import {FP_DAO} from "../../src/Faillapop_DAO.sol";
-import {FP_PowersellerNFT} from "../../src/Faillapop_PowersellerNFT.sol";
-import {FP_Shop} from "../../src/Faillapop_Shop.sol";
-import {FP_Token} from "../../src/Faillapop_ERC20.sol";
-import {FP_Vault} from "../../src/Faillapop_Vault.sol";
-import {FP_Proxy} from "../../src/Faillapop_Proxy.sol";
-import {DeployFaillapop} from "../../script/DeployFaillapop.s.sol";
+import {FP_CoolNFT} from "../../src/FP_CoolNFT.sol";
+import {FP_DAO} from "../../src/FP_DAO.sol";
+import {FP_PowersellerNFT} from "../../src/FP_PowersellerNFT.sol";
+import {FP_Shop} from "../../src/FP_Shop.sol";
+import {FP_Token} from "../../src/FP_ERC20.sol";
+import {FP_Vault} from "../../src/FP_Vault.sol";
+import {FP_Proxy} from "../../src/FP_Proxy.sol";
+import {DeployFP} from "../../script/DeployFP.s.sol";
 
-contract Faillapop_Vault_Test is Test {
+contract FP_Vault_Test is Test {
 
     FP_Shop public shop;
     FP_Vault public vault;
@@ -48,7 +48,7 @@ contract Faillapop_Vault_Test is Test {
         vm.deal(SELLER2, 15 ether);
         vm.deal(BUYER1, 15 ether);
 
-        DeployFaillapop deploy = new DeployFaillapop();
+        DeployFP deploy = new DeployFP();
         (shop, token, coolNFT, powersellerNFT, dao, vault, proxy) = deploy.run();
     }
 
