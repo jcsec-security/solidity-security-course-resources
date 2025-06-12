@@ -10,7 +10,7 @@ import {ERC721} from "@openzeppelin/contracts@v5.0.1/token/ERC721/ERC721.sol";
     @author Faillapop team :D 
     @notice The contract allows the shop to mint a PowerSeller NFT for users and remove it if they are considered malicious. PowerSeller badge is required to claimRewards in the vault.
     @dev Security review is pending... should we deploy this?
-    @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/solidity-security-teaching-resources
+    @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/faillapop
 */
 contract FP_PowersellerNFT is IFP_PowersellerNFT, ERC721, AccessControl {
 
@@ -30,12 +30,7 @@ contract FP_PowersellerNFT is IFP_PowersellerNFT, ERC721, AccessControl {
     ///@notice Mapping from user address to tokenId
     mapping (address => uint256) public tokenIds;
 
-    /************************************** Events and modifiers *****************************************************/
-
-    ///@notice Emitted when a user loses a PowerSeller badge
-    event PowersellerNFT_Removed(address indexed owner, uint256 tokenId);
-    ///@notice Emitted when a user receives a PowerSeller badge
-    event PowersellerNFT_Minted(address indexed owner, uint256 tokenId);	
+    /************************************** Modifiers *****************************************************/
 
     /**
         @notice Modifier to check if the Shop address has been set

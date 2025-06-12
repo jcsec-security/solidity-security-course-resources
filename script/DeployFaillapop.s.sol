@@ -2,18 +2,19 @@
 pragma solidity ^0.8.13;
 
 import {Script} from "forge-std/Script.sol";
-import {FP_CoolNFT} from "../src/Faillapop_CoolNFT.sol";
-import {FP_DAO} from "../src/Faillapop_DAO.sol";
-import {FP_PowersellerNFT} from "../src/Faillapop_PowersellerNFT.sol";
-import {FP_Shop} from "../src/Faillapop_shop.sol";
-import {FP_Token} from "../src/Faillapop_ERC20.sol";
-import {FP_Vault} from "../src/Faillapop_vault.sol";
-import {FP_Proxy} from "../src/Faillapop_Proxy.sol";
+import {FP_CoolNFT} from "../src/FP_CoolNFT.sol";
+import {FP_DAO} from "../src/FP_DAO.sol";
+import {FP_PowersellerNFT} from "../src/FP_PowersellerNFT.sol";
+import {FP_Shop} from "../src/FP_Shop.sol";
+import {FP_Token} from "../src/FP_Token.sol";
+import {FP_Vault} from "../src/FP_Vault.sol";
+import {FP_Proxy} from "../src/FP_Proxy.sol";
 
 contract DeployFaillapop is Script {
-
+    address public deployer;
     function run() external returns(FP_Shop shop, FP_Token token, FP_CoolNFT coolNFT, FP_PowersellerNFT powersellerNFT, FP_DAO dao, FP_Vault vault, FP_Proxy proxy) {
-        vm.startBroadcast(vm.envUint("PRIVATE_KEY"));
+        deployer = vm.addr(vm.envUint("PRIVATE_KEY"));
+        vm.startBroadcast(deployer);
         shop = new FP_Shop();
         token = new FP_Token();
         coolNFT = new FP_CoolNFT();

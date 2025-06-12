@@ -10,7 +10,7 @@ import {ERC721} from "@openzeppelin/contracts@v5.0.1/token/ERC721/ERC721.sol";
     @author Faillapop team :D 
     @notice The contract allows the DAO to mint Cool NFTs for users.
     @dev Security review is pending... should we deploy this?
-    @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/solidity-security-teaching-resources
+    @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/faillapop
 */
 contract FP_CoolNFT is IFP_CoolNFT, ERC721, AccessControl {
 
@@ -32,12 +32,7 @@ contract FP_CoolNFT is IFP_CoolNFT, ERC721, AccessControl {
     ///@notice Mapping from user address to tokenId
     mapping (address => uint256[]) public tokenIds;
 
-     /************************************** Events and modifiers *****************************************************/
-
-    ///@notice Emitted when a user's coolNFTs are slashed
-    event CoolNFTs_Slashed(address indexed owner);
-    ///@notice Emitted when a user receives a PowerSeller badge
-    event CoolNFT_Minted(address indexed owner, uint256 tokenId);
+     /************************************** Modifiers *****************************************************/
 
     /**
         @notice Modifier to check if the DAO address has been set

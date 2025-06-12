@@ -2,16 +2,17 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {FP_CoolNFT} from "../../src/Faillapop_CoolNFT.sol";
-import {FP_DAO} from "../../src/Faillapop_DAO.sol";
-import {FP_PowersellerNFT} from "../../src/Faillapop_PowersellerNFT.sol";
-import {FP_Shop} from "../../src/Faillapop_shop.sol";
-import {FP_Token} from "../../src/Faillapop_ERC20.sol";
-import {FP_Vault} from "../../src/Faillapop_vault.sol";
-import {FP_Proxy} from "../../src/Faillapop_Proxy.sol";
+import {FP_CoolNFT} from "../../src/FP_CoolNFT.sol";
+import {FP_DAO} from "../../src/FP_DAO.sol";
+import {IFP_DAO} from "../../src/interfaces/IFP_DAO.sol";
+import {FP_PowersellerNFT} from "../../src/FP_PowersellerNFT.sol";
+import {FP_Shop} from "../../src/FP_Shop.sol";
+import {FP_Token} from "../../src/FP_Token.sol";
+import {FP_Vault} from "../../src/FP_Vault.sol";
+import {FP_Proxy} from "../../src/FP_Proxy.sol";
 import {DeployFaillapop} from "../../script/DeployFaillapop.s.sol";
 
-contract Faillapop_DAO_Test is Test {
+contract FP_DAO_Test is Test {
     ///@notice The time window in which a proposal can not be voted
     uint256 public constant PROPOSAL_REVIEW_TIME = 1 days;
     ///@notice The minimum voting period for a proposal
@@ -24,6 +25,10 @@ contract Faillapop_DAO_Test is Test {
     uint256 constant MIN_REVEALING_TIME = 1 days;
     ///@notice The maximum revealing period for votes on a dispute
     uint256 constant MAX_REVEALING_TIME = 3 days;
+    address public constant USER1 = address(bytes20("USER1"));
+    address public constant USER2 = address(bytes20("USER2"));
+    address public constant SELLER1 = address(bytes20("SELLER1"));
+    address public constant BUYER1 = address(bytes20("BUYER1"));
 
     FP_Shop public shop;
     FP_Vault public vault;
@@ -32,11 +37,6 @@ contract Faillapop_DAO_Test is Test {
     FP_CoolNFT public coolNFT;
     FP_PowersellerNFT public powersellerNFT;
     FP_Proxy public proxy;
-
-    address public constant USER1 = address(1);
-    address public constant USER2 = address(2);
-    address public constant SELLER1 = address(3);
-    address public constant BUYER1 = address(4);
 
     /************************************* Modifiers *************************************/
 
@@ -219,7 +219,7 @@ contract Faillapop_DAO_Test is Test {
         assertEq(disputeBefore.totalVoters, 0, "Wrong totalVoters");
         assertEq(disputeBefore.committingStartingTime, 0, "Wrong committingStartingTime");
         assertEq(disputeBefore.revealingStartingTime, 0, "Wrong revealingStartingTime");
-        assertEq(uint256(disputeBefore.state), uint256(FP_DAO.DisputeState.NOT_ACTIVE), "Wrong totalVoters");
+        assertEq(uint256(disputeBefore.state), uint256(IFP_DAO.DisputeState.NOT_ACTIVE), "Wrong totalVoters");
 
         // Create dispute
         vm.prank(SELLER1);
@@ -242,7 +242,7 @@ contract Faillapop_DAO_Test is Test {
         assertEq(disputeAfter.totalVoters, 0, "Wrong totalVoters, dispute creation failed");
         assertEq(disputeAfter.committingStartingTime, block.timestamp, "Wrong committingStartingTime");
         assertEq(disputeAfter.revealingStartingTime, 0, "Wrong revealingStartingTime");
-        assertEq(uint256(disputeAfter.state), uint256(FP_DAO.DisputeState.COMMITTING_PHASE), "Wrong totalVoters");
+        assertEq(uint256(disputeAfter.state), uint256(IFP_DAO.DisputeState.COMMITTING_PHASE), "Wrong totalVoters");
     }
 
     function test_newDispute_RevertIf_CallerIsNotTheShop() public createLegitSale() buyLastItem() disputeSale() {
@@ -256,14 +256,14 @@ contract Faillapop_DAO_Test is Test {
     function test_commitVoteOnDispute() public createLegitSale() buyLastItem() disputeSale() replyDisputedSale() mintAndCommitVote(true, "secret") {
         // Check 
         FP_DAO.Dispute memory dispute = dao.queryDispute(0);
-        assertEq(uint(dao.hasVotedOnDispute(USER1, 0)), uint(FP_DAO.Vote.COMMITTED), "Wrong hasVoted");
+        assertEq(uint(dao.hasVotedOnDispute(USER1, 0)), uint(IFP_DAO.Vote.COMMITTED), "Wrong hasVoted");
         assertEq(uint(dao.commitsOnDisputes(0, USER1)), uint(keccak256(abi.encodePacked(true, "secret"))),"Wrong commit");        
         assertEq(dispute.itemId, 0, "Wrong itemId");
         assertEq(dispute.votesFor, 0, "Wrong votesFor");
         assertEq(dispute.votesAgainst, 0, "Wrong votesAgainst");
         assertEq(dispute.totalVoters, 0, "Wrong totalVoters");
         assertEq(dispute.revealingStartingTime, 0, "Wrong revealingStartingTime");
-        assertEq(uint256(dispute.state), uint256(FP_DAO.DisputeState.COMMITTING_PHASE), "Wrong state");
+        assertEq(uint256(dispute.state), uint256(IFP_DAO.DisputeState.COMMITTING_PHASE), "Wrong state");
     }
 
     function test_commitVoteOnDispute_RevertIf_NotInCommitingPhase() public createLegitSale() buyLastItem() {
@@ -284,7 +284,7 @@ contract Faillapop_DAO_Test is Test {
     function test_revealDisputeVote() public createLegitSale() buyLastItem() disputeSale() replyDisputedSale() mintAndCommitVote(true, "secret") revealVote(true, "secret") {
         // Check vote
         FP_DAO.Dispute memory dispute = dao.queryDispute(0);
-        assertEq(uint(dao.hasVotedOnDispute(USER1, 0)), uint(FP_DAO.Vote.FOR), "Wrong hasVoted");
+        assertEq(uint(dao.hasVotedOnDispute(USER1, 0)), uint(IFP_DAO.Vote.FOR), "Wrong hasVoted");
         assertEq(dispute.itemId, 0, "Wrong itemId");
         assertEq(dispute.buyerReasoning, "Buyer's reasoning", "Wrong buyerReasoning");
         assertEq(dispute.sellerReasoning, "Seller's reasoning", "Wrong sellerReasoning");
@@ -292,7 +292,7 @@ contract Faillapop_DAO_Test is Test {
         assertEq(dispute.votesAgainst, 0, "Wrong votesAgainst");
         assertEq(dispute.totalVoters, 1, "Wrong totalVoters");
         assertEq(dispute.revealingStartingTime, block.timestamp, "Wrong revealingStartingTime");
-        assertEq(uint256(dispute.state), uint256(FP_DAO.DisputeState.REVEALING_PHASE), "Wrong state");
+        assertEq(uint256(dispute.state), uint256(IFP_DAO.DisputeState.REVEALING_PHASE), "Wrong state");
     }
 
     function test_revealDisputeVote_RevertIf_ItsNeitherInReveilingPhaseNorInCommittingPhase() public createLegitSale() buyLastItem() disputeSale() replyDisputedSale() {
@@ -340,7 +340,7 @@ contract Faillapop_DAO_Test is Test {
         vm.warp(block.timestamp + MIN_REVEALING_TIME);
         dao.endDispute(0);
         FP_DAO.Dispute memory dispute = dao.queryDispute(0);
-        FP_DAO.Vote result = dao.queryDisputeResult(0);
+        IFP_DAO.Vote result = dao.queryDisputeResult(0);
         assertEq(dispute.itemId, 0, "Wrong itemId");
         assertEq(dispute.buyerReasoning, "", "Wrong buyerReasoning");
         assertEq(dispute.sellerReasoning, "", "Wrong sellerReasoning");
@@ -349,14 +349,14 @@ contract Faillapop_DAO_Test is Test {
         assertEq(dispute.totalVoters, 0, "Wrong totalVoters");
         assertEq(dispute.committingStartingTime, 0, "Wrong committingStartingTime");
         assertEq(dispute.revealingStartingTime, 0, "Wrong revealingStartingTime");
-        assertEq(uint(result), uint(FP_DAO.Vote.FOR), "Wrong result");
+        assertEq(uint(result), uint(IFP_DAO.Vote.FOR), "Wrong result");
     }
 
     function test_endDispute_VotesAgainst() public createLegitSale() buyLastItem() disputeSale() replyDisputedSale() mintAndCommitVote(false, "secret") revealVote(false, "secret") {
         vm.warp(block.timestamp + MIN_REVEALING_TIME);
         dao.endDispute(0);
         FP_DAO.Dispute memory dispute = dao.queryDispute(0);
-        FP_DAO.Vote result = dao.queryDisputeResult(0);
+        IFP_DAO.Vote result = dao.queryDisputeResult(0);
         assertEq(dispute.itemId, 0, "Wrong itemId");
         assertEq(dispute.buyerReasoning, "", "Wrong buyerReasoning");
         assertEq(dispute.sellerReasoning, "", "Wrong sellerReasoning");
@@ -365,7 +365,7 @@ contract Faillapop_DAO_Test is Test {
         assertEq(dispute.totalVoters, 0, "Wrong totalVoters");
         assertEq(dispute.committingStartingTime, 0, "Wrong committingStartingTime");
         assertEq(dispute.revealingStartingTime, 0, "Wrong revealingStartingTime");
-        assertEq(uint(result), uint(FP_DAO.Vote.AGAINST), "Wrong result");
+        assertEq(uint(result), uint(IFP_DAO.Vote.AGAINST), "Wrong result");
     }
 
     function test_endDispute_RevertIf_NotInRevealingPhase() public createLegitSale() buyLastItem() disputeSale() replyDisputedSale() mintAndCommitVote(true, "secret") {
@@ -459,7 +459,7 @@ contract Faillapop_DAO_Test is Test {
         assertEq(proposalBefore.votesFor, 0, "Wrong votesFor");
         assertEq(proposalBefore.votesAgainst, 0, "Wrong votesAgainst");
         assertEq(proposalBefore.totalVoters, 0, "Wrong totalVoters");
-        assertEq(uint256(proposalBefore.state), uint256(FP_DAO.ProposalState.NOT_ACTIVE), "Wrong state");
+        assertEq(uint256(proposalBefore.state), uint256(IFP_DAO.ProposalState.NOT_ACTIVE), "Wrong state");
 
         // Create proposal
         FP_Shop newShop = new FP_Shop();
@@ -476,7 +476,7 @@ contract Faillapop_DAO_Test is Test {
         assertEq(newProposal.votesFor, 0, "Wrong votesFor");
         assertEq(newProposal.votesAgainst, 0, "Wrong votesAgainst");
         assertEq(newProposal.totalVoters, 0, "Wrong totalVoters");
-        assertEq(uint256(newProposal.state), uint256(FP_DAO.ProposalState.ACTIVE), "Wrong state");
+        assertEq(uint256(newProposal.state), uint256(IFP_DAO.ProposalState.ACTIVE), "Wrong state");
     }
 
     function test_newUpgradeProposal_RevertIf_AddressHasNoCode() public {
@@ -488,35 +488,35 @@ contract Faillapop_DAO_Test is Test {
     function test_castVoteOnProposal_VoteFor() public createUpgradeProposal() spendReviewTime() mintAndVoteOnProposal(USER1, 1000, true) {        
         // Check vote
         FP_DAO.UpgradeProposal memory updatedProposal = dao.queryUpgradeProposal(0);
-        assertEq(uint(dao.hasVotedOnUpgradeProposal(address(USER1), 0)), uint(FP_DAO.Vote.FOR),"Wrong hasVoted");
+        assertEq(uint(dao.hasVotedOnUpgradeProposal(address(USER1), 0)), uint(IFP_DAO.Vote.FOR),"Wrong hasVoted");
         assertEq(updatedProposal.id, 0, "Wrong proposalId");
         assertEq(updatedProposal.votesFor, 1000, "Wrong votesFor");
         assertEq(updatedProposal.votesAgainst, 0, "Wrong votesAgainst");
         assertEq(updatedProposal.totalVoters, 1, "Wrong totalVoters");        
-        assertEq(uint256(updatedProposal.state), uint256(FP_DAO.ProposalState.ACTIVE), "Wrong state");
+        assertEq(uint256(updatedProposal.state), uint256(IFP_DAO.ProposalState.ACTIVE), "Wrong state");
     }
 
     function test_castVoteOnProposal_VoteAgainst() public createUpgradeProposal() spendReviewTime() mintAndVoteOnProposal(USER1, 1000, false) {
         // Check vote
         FP_DAO.UpgradeProposal memory updatedProposal = dao.queryUpgradeProposal(0);
-        assertEq(uint(dao.hasVotedOnUpgradeProposal(address(USER1), 0)), uint(FP_DAO.Vote.AGAINST),"Wrong hasVoted");
+        assertEq(uint(dao.hasVotedOnUpgradeProposal(address(USER1), 0)), uint(IFP_DAO.Vote.AGAINST),"Wrong hasVoted");
         assertEq(updatedProposal.id, 0, "Wrong proposalId");
         assertEq(updatedProposal.votesFor, 0, "Wrong votesFor");
         assertEq(updatedProposal.votesAgainst, 1000, "Wrong votesAgainst");
         assertEq(updatedProposal.totalVoters, 1, "Wrong totalVoters");
-        assertEq(uint256(updatedProposal.state), uint256(FP_DAO.ProposalState.ACTIVE), "Wrong state");
+        assertEq(uint256(updatedProposal.state), uint256(IFP_DAO.ProposalState.ACTIVE), "Wrong state");
     }
 
     function test_castVoteOnProposal_2Votes() public createUpgradeProposal() spendReviewTime() mintAndVoteOnProposal(USER1, 1000, false) mintAndVoteOnProposal(USER2, 3500, true){       
         // Check vote
         FP_DAO.UpgradeProposal memory updatedProposal = dao.queryUpgradeProposal(0);
-        assertEq(uint(dao.hasVotedOnUpgradeProposal(address(USER1), 0)), uint(FP_DAO.Vote.AGAINST),"Wrong hasVoted");
-        assertEq(uint(dao.hasVotedOnUpgradeProposal(address(USER2), 0)), uint(FP_DAO.Vote.FOR),"Wrong hasVoted");
+        assertEq(uint(dao.hasVotedOnUpgradeProposal(address(USER1), 0)), uint(IFP_DAO.Vote.AGAINST),"Wrong hasVoted");
+        assertEq(uint(dao.hasVotedOnUpgradeProposal(address(USER2), 0)), uint(IFP_DAO.Vote.FOR),"Wrong hasVoted");
         assertEq(updatedProposal.id, 0, "Wrong proposalId");
         assertEq(updatedProposal.votesAgainst, 1000, "Wrong votesAgainst");
         assertEq(updatedProposal.votesFor, 3500, "Wrong votesFor");
         assertEq(updatedProposal.totalVoters, 2, "Wrong totalVoters");
-        assertEq(uint256(updatedProposal.state), uint256(FP_DAO.ProposalState.ACTIVE), "Wrong state");
+        assertEq(uint256(updatedProposal.state), uint256(IFP_DAO.ProposalState.ACTIVE), "Wrong state");
     }
 
     function test_castVoteOnProposal_RevertIf_ReviewTimeHasNotElapsed() public createUpgradeProposal() {
@@ -534,7 +534,7 @@ contract Faillapop_DAO_Test is Test {
         // Check vote
         FP_DAO.UpgradeProposal memory proposal = dao.queryUpgradeProposal(0);
         
-        assertEq(uint(dao.hasVotedOnUpgradeProposal(address(USER1), 0)), uint(FP_DAO.Vote.DIDNT_VOTE),"Wrong hasVoted");
+        assertEq(uint(dao.hasVotedOnUpgradeProposal(address(USER1), 0)), uint(IFP_DAO.Vote.DIDNT_VOTE),"Wrong hasVoted");
         assertEq(proposal.votesFor, 0, "Wrong votesFor");
         assertEq(proposal.votesAgainst, 0, "Wrong votesAgainst");
         assertEq(proposal.totalVoters, 0, "Wrong totalVoters");
@@ -562,12 +562,12 @@ contract Faillapop_DAO_Test is Test {
         // Check vote
         FP_DAO.UpgradeProposal memory updatedProposal = dao.queryUpgradeProposal(0);
         
-        assertEq(uint(dao.hasVotedOnUpgradeProposal(address(USER1), 0)), uint(FP_DAO.Vote.FOR),"Wrong hasVoted");
+        assertEq(uint(dao.hasVotedOnUpgradeProposal(address(USER1), 0)), uint(IFP_DAO.Vote.FOR),"Wrong hasVoted");
         assertEq(updatedProposal.id, 0, "Wrong proposalId");
         assertEq(updatedProposal.votesFor, 1000, "Wrong votesFor");
         assertEq(updatedProposal.votesAgainst, 0, "Wrong votesAgainst");
         assertEq(updatedProposal.totalVoters, 1, "Wrong totalVoters");
-        assertEq(uint256(updatedProposal.state), uint256(FP_DAO.ProposalState.ACTIVE), "Wrong state");
+        assertEq(uint256(updatedProposal.state), uint256(IFP_DAO.ProposalState.ACTIVE), "Wrong state");
     }
 
     function test_castVoteOnProposal_RevertIf_HasNoTokens() public createUpgradeProposal() spendReviewTime() {    
@@ -579,7 +579,7 @@ contract Faillapop_DAO_Test is Test {
         // Check vote
         FP_DAO.UpgradeProposal memory updatedProposal = dao.queryUpgradeProposal(0);
         
-        assertEq(uint(dao.hasVotedOnUpgradeProposal(address(USER1), 0)), uint(FP_DAO.Vote.DIDNT_VOTE),"Wrong hasVoted");
+        assertEq(uint(dao.hasVotedOnUpgradeProposal(address(USER1), 0)), uint(IFP_DAO.Vote.DIDNT_VOTE),"Wrong hasVoted");
         assertEq(updatedProposal.votesFor, 0, "Wrong votesFor");
         assertEq(updatedProposal.votesAgainst, 0, "Wrong votesAgainst");
         assertEq(updatedProposal.totalVoters, 0, "Wrong totalVoters");
@@ -600,7 +600,7 @@ contract Faillapop_DAO_Test is Test {
         assertEq(canceledProposal.votesFor, 0, "Wrong votesFor");
         assertEq(canceledProposal.votesAgainst, 0, "Wrong votesAgainst");
         assertEq(canceledProposal.totalVoters, 0, "Wrong totalVoters");
-        assertEq(uint256(canceledProposal.state), uint256(FP_DAO.ProposalState.NOT_ACTIVE), "Wrong state");
+        assertEq(uint256(canceledProposal.state), uint256(IFP_DAO.ProposalState.NOT_ACTIVE), "Wrong state");
     }
 
     function test_cancelProposalByCreator_RevertIf_CallerIsNotCreator() public createUpgradeProposal() {
@@ -614,7 +614,7 @@ contract Faillapop_DAO_Test is Test {
         assertEq(proposal.creator, USER1, "Wrong creator");
         assertEq(proposal.id, 0, "Wrong proposalId");
         assertEq(proposal.creationTimestamp, block.timestamp, "Wrong timestamp");
-        assertEq(uint256(proposal.state), uint256(FP_DAO.ProposalState.ACTIVE), "Wrong state");
+        assertEq(uint256(proposal.state), uint256(IFP_DAO.ProposalState.ACTIVE), "Wrong state");
     }
 
     function test_cancelProposalByCreator_RevertIf_ProposalIsNotActive() public {
@@ -637,7 +637,7 @@ contract Faillapop_DAO_Test is Test {
         assertEq(canceledProposal.votesFor, 0, "Wrong votesFor");
         assertEq(canceledProposal.votesAgainst, 0, "Wrong votesAgainst");
         assertEq(canceledProposal.totalVoters, 0, "Wrong totalVoters");
-        assertEq(uint256(canceledProposal.state), uint256(FP_DAO.ProposalState.NOT_ACTIVE), "Wrong state");
+        assertEq(uint256(canceledProposal.state), uint256(IFP_DAO.ProposalState.NOT_ACTIVE), "Wrong state");
     }
 
     function test_cancelProposal_RevertIf_PasswordIsWrong() public createUpgradeProposal() {
@@ -651,7 +651,7 @@ contract Faillapop_DAO_Test is Test {
         assertEq(proposal.creator, USER1, "Wrong creator");
         assertEq(proposal.id, 0, "Wrong proposalId");
         assertEq(proposal.creationTimestamp, block.timestamp, "Wrong timestamp");
-        assertEq(uint256(proposal.state), uint256(FP_DAO.ProposalState.ACTIVE), "Wrong state");
+        assertEq(uint256(proposal.state), uint256(IFP_DAO.ProposalState.ACTIVE), "Wrong state");
     }
 
     function test_cancelProposal_RevertIf_ProposalIsNotActive() public {
@@ -679,10 +679,10 @@ contract Faillapop_DAO_Test is Test {
         assertEq(resolvedProposal.votesFor, proposalBefore.votesFor, "Wrong votesFor");
         assertEq(resolvedProposal.votesAgainst, proposalBefore.votesAgainst, "Wrong votesAgainst");
         assertEq(resolvedProposal.totalVoters, proposalBefore.totalVoters, "Wrong totalVoters");
-        assertEq(uint256(resolvedProposal.state), uint256(FP_DAO.ProposalState.PASSED), "Wrong state");
+        assertEq(uint256(resolvedProposal.state), uint256(IFP_DAO.ProposalState.PASSED), "Wrong state");
 
         // Check proposal result
-        assertEq(uint(dao.queryUpgradeProposalResult(0)), uint(FP_DAO.Vote.FOR), "Wrong proposal result");
+        assertEq(uint(dao.queryUpgradeProposalResult(0)), uint(IFP_DAO.Vote.FOR), "Wrong proposal result");
 
         // Check current implementation again
         assertEq(proxy.getImplementation(), address(shop), "Actual implementation is wrong");
@@ -705,10 +705,10 @@ contract Faillapop_DAO_Test is Test {
         assertEq(resolvedProposal.votesFor, 0, "Wrong votesFor");
         assertEq(resolvedProposal.votesAgainst, 0, "Wrong votesAgainst");
         assertEq(resolvedProposal.totalVoters, 0, "Wrong totalVoters");
-        assertEq(uint256(resolvedProposal.state), uint256(FP_DAO.ProposalState.NOT_ACTIVE), "Wrong state");
+        assertEq(uint256(resolvedProposal.state), uint256(IFP_DAO.ProposalState.NOT_ACTIVE), "Wrong state");
 
         // Check proposal result
-        assertEq(uint(dao.queryUpgradeProposalResult(0)), uint(FP_DAO.Vote.AGAINST), "Wrong proposal result");
+        assertEq(uint(dao.queryUpgradeProposalResult(0)), uint(IFP_DAO.Vote.AGAINST), "Wrong proposal result");
 
         // Check current implementation
         assertEq(proxy.getImplementation(), address(shop), "Actual implementation is wrong");
@@ -755,7 +755,7 @@ contract Faillapop_DAO_Test is Test {
         assertEq(executedProposal.votesFor, 0, "Wrong votesFor");
         assertEq(executedProposal.votesAgainst, 0, "Wrong votesAgainst");
         assertEq(executedProposal.totalVoters, 0, "Wrong totalVoters");
-        assertEq(uint256(executedProposal.state), uint256(FP_DAO.ProposalState.NOT_ACTIVE), "Wrong state");
+        assertEq(uint256(executedProposal.state), uint256(IFP_DAO.ProposalState.NOT_ACTIVE), "Wrong state");
 
         // Check new implementation again
         assertEq(proxy.getImplementation(), newShop, "Actual implementation is wrong");

@@ -2,17 +2,19 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {FP_CoolNFT} from "../../src/Faillapop_CoolNFT.sol";
-import {FP_DAO} from "../../src/Faillapop_DAO.sol";
-import {FP_PowersellerNFT} from "../../src/Faillapop_PowersellerNFT.sol";
-import {FP_Shop} from "../../src/Faillapop_shop.sol";
-import {FP_Token} from "../../src/Faillapop_ERC20.sol";
-import {FP_Vault} from "../../src/Faillapop_vault.sol";
-import {FP_Proxy} from "../../src/Faillapop_Proxy.sol";
+import {FP_CoolNFT} from "../../src/FP_CoolNFT.sol";
+import {FP_DAO} from "../../src/FP_DAO.sol";
+import {FP_PowersellerNFT} from "../../src/FP_PowersellerNFT.sol";
+import {FP_Shop} from "../../src/FP_Shop.sol";
+import {FP_Token} from "../../src/FP_Token.sol";
+import {FP_Vault} from "../../src/FP_Vault.sol";
+import {FP_Proxy} from "../../src/FP_Proxy.sol";
 import {DeployFaillapop} from "../../script/DeployFaillapop.s.sol";
 
-contract Faillapop_CoolNFT_Test is Test {
-    
+contract FP_CoolNFT_Test is Test {
+    address public constant USER1 = address(bytes20("USER1"));
+    address public constant USER2 = address(bytes20("USER2"));
+
     FP_CoolNFT public coolNFT;
     FP_DAO public dao;
     FP_Token public token;     
@@ -20,9 +22,6 @@ contract Faillapop_CoolNFT_Test is Test {
     FP_Shop public shop;
     FP_PowersellerNFT public powersellerNFT;
     FP_Proxy public proxy;
-
-    address public constant USER1 = address(0x1);
-    address public constant USER2 = address(0x2);
 
     /************************************** Modifiers **************************************/
 

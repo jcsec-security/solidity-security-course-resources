@@ -2,17 +2,22 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {FP_CoolNFT} from "../../src/Faillapop_CoolNFT.sol";
-import {FP_DAO} from "../../src/Faillapop_DAO.sol";
-import {FP_PowersellerNFT} from "../../src/Faillapop_PowersellerNFT.sol";
-import {FP_Shop} from "../../src/Faillapop_shop.sol";
-import {FP_Token} from "../../src/Faillapop_ERC20.sol";
-import {FP_Vault} from "../../src/Faillapop_vault.sol";
-import {FP_Proxy} from "../../src/Faillapop_Proxy.sol";
+import {FP_CoolNFT} from "../../src/FP_CoolNFT.sol";
+import {FP_DAO} from "../../src/FP_DAO.sol";
+import {FP_PowersellerNFT} from "../../src/FP_PowersellerNFT.sol";
+import {FP_Shop} from "../../src/FP_Shop.sol";
+import {FP_Token} from "../../src/FP_Token.sol";
+import {FP_Vault} from "../../src/FP_Vault.sol";
+import {FP_Proxy} from "../../src/FP_Proxy.sol";
 import {DeployFaillapop} from "../../script/DeployFaillapop.s.sol";
 
-contract Faillapop_vault_Test is Test {
+contract FP_Vault_Test is Test {
+    address public constant SELLER1 = address(bytes20("SELLER1"));
+    address public constant SELLER2 = address(bytes20("SELLER2"));
+    address public constant USER1 = address(bytes20("USER1"));
+    address public constant BUYER1 = address(bytes20("BUYER1"));
 
+    address public deployer;
     FP_Shop public shop;
     FP_Vault public vault;
     FP_DAO public dao;
@@ -20,11 +25,6 @@ contract Faillapop_vault_Test is Test {
     FP_CoolNFT public coolNFT;
     FP_PowersellerNFT public powersellerNFT;
     FP_Proxy public proxy;
-
-    address public constant SELLER1 = address(1);
-    address public constant SELLER2 = address(2);
-    address public constant USER1 = address(3);
-    address public constant BUYER1 = address(4);
 
     /************************************* Modifiers *************************************/
 
@@ -50,6 +50,7 @@ contract Faillapop_vault_Test is Test {
 
         DeployFaillapop deploy = new DeployFaillapop();
         (shop, token, coolNFT, powersellerNFT, dao, vault, proxy) = deploy.run();
+        deployer = deploy.deployer();
     }
 
     /************************************** Tests **************************************/ 
@@ -273,6 +274,7 @@ contract Faillapop_vault_Test is Test {
             );
             require(success7, "Offer index not retrieved");
             uint256 maliciousSaleId = abi.decode(data2, (uint256)) - 1;
+        vm.prank(deployer);
         (bool success8, ) = address(proxy).call(
             abi.encodeWithSignature(
                 "removeMaliciousSale(uint256)",
@@ -285,7 +287,5 @@ contract Faillapop_vault_Test is Test {
         vault.claimRewards();
 
         assertEq(vault.rewardsClaimed(SELLER1), vault.maxClaimableAmount(), "Seller should have claimed the max amount");   
-
     }
-
 }

@@ -2,13 +2,13 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {FP_Token} from "../../src/Faillapop_ERC20.sol";
+import {FP_Token} from "../../src/FP_Token.sol";
 
-contract Faillapop_ERC20_Test is Test {
+contract FP_Token_Test is Test {
+    address public constant ADMIN = address(bytes20("ADMIN"));
+    address public constant USER = address(bytes20("USER"));
     
     FP_Token public token;
-    address public constant ADMIN = address(0x1);
-    address public constant USER = address(0x2);
 
     /************************************** Set Up **************************************/
 

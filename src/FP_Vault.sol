@@ -7,13 +7,13 @@ import {AccessControl} from "@openzeppelin/contracts@v5.0.1/access/AccessControl
 
 
 /** 
-    @title FaillaPop vault [v0.2]
+    @title FaillaPop vault
     @author Faillapop team :D 
     @notice The contract allows anyone to stake and unstake Ether. When a seller publishes a new item
         in the shop, the funds are locked during the selling process. Then, If the user is considered malicious,
         the funds are slashed. 
     @dev Security review is pending... should we deploy this?
-    @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/solidity-security-teaching-resources
+    @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/faillapop
 */
 contract FP_Vault is IFP_Vault, AccessControl {
 
@@ -45,21 +45,7 @@ contract FP_Vault is IFP_Vault, AccessControl {
     uint256 public totalSlashed;
 
 
-    /************************************** Events and modifiers *****************************************************/
-
-    ///@notice Emitted when a user stakes funds, contains the user address and the amount staked
-    event Stake(address user, uint256 amount);
-    ///@notice Emitted when a user unstakes funds, contains the user address and the amount unstaked
-    event Unstake(address user, uint256 amount);
-    ///@notice Emitted when a user funds get locked, contains the user address and the amount locked
-    event Locked(address user, uint256 amount);
-    ///@notice Emitted when a user funds get unlocked, contains the user address and the amount unlocked
-    event Unlocked(address user, uint256 amount);
-    ///@notice Emitted when a user funds get slashed, contains the user address and the amount slashed
-    event Slashed(address user, uint256 amount);
-    ///@notice Emitted when a user claims rewards, contains the user address and the amount claimed
-    event RewardsClaimed(address user, uint256 amount);
-
+    /************************************** Modifiers *****************************************************/
 
     /** 
         @notice Check if the user has enough staked funds to lock or unstake

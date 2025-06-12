@@ -6,9 +6,19 @@ pragma solidity ^0.8.13;
     @author Faillapop team :D 
     @notice The contract allows the DAO to mint a Cool NFT for users.
     @dev Security review is pending... should we deploy this?
-    @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/solidity-security-teaching-resources
+    @custom:ctf This contract is part of JC's mock-audit exercise at https://github.com/jcr-security/faillapop
 */
 interface IFP_CoolNFT {
+
+    /************************************** Events  *****************************************************/
+
+    ///@notice Emitted when a user's coolNFTs are slashed
+    event CoolNFTs_Slashed(address indexed owner);
+    ///@notice Emitted when a user receives a PowerSeller badge
+    event CoolNFT_Minted(address indexed owner, uint256 tokenId);
+
+    /************************************** Functions *****************************************************/
+    
     /**
         @notice Sets the DAO address as the new Control Role
         @param daoAddr The address of the DAO contract
